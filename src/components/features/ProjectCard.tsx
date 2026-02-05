@@ -1,0 +1,45 @@
+"use client";
+
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+import { PostMetadata } from "@/lib/mdx";
+
+export function ProjectCard({ project }: { project: PostMetadata }) {
+  return (
+    <motion.div
+      whileHover={{ y: -5 }}
+      className="group relative flex flex-col justify-between rounded-xl border border-border/50 bg-card p-6 transition-colors hover:bg-accent/5"
+    >
+      <div>
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="text-xl font-semibold group-hover:text-primary transition-colors">
+            {project.title}
+          </h3>
+          {project.link && (
+            <a href={project.link} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">
+              <ArrowUpRight className="h-5 w-5" />
+            </a>
+          )}
+        </div>
+        <p className="text-muted-foreground mb-6 line-clamp-3">{project.summary}</p>
+      </div>
+      
+      <div className="flex flex-wrap gap-2 mt-auto">
+        {project.techStack?.map((tech) => (
+          <span
+            key={tech}
+            className="rounded-md bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground"
+          >
+            {tech}
+          </span>
+        ))}
+      </div>
+
+      <Link href={`/projects/${project.slug}`} className="absolute inset-0" aria-label={`View project ${project.title}`} />
+      {/* Interactive elements above like the external link should have higher z-index if needed, but here the whole card is clickable via Link overlay. 
+          The external link icon needs z-10 relative.
+       */}
+    </motion.div>
+  );
+}
