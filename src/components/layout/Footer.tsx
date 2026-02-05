@@ -59,7 +59,7 @@ export function Footer() {
         
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-8 border-t border-border/40 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
-            Build with <span className="text-red-500">♥</span>
+            DM for <span className="text-white">Partnership</span>
           </div>
           <p>© {new Date().getFullYear()} Arya</p>
         </div>
