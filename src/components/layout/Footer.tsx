@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Github, Linkedin, Mail, Twitter } from "lucide-react";
+import { Linkedin, Mail } from "lucide-react";
 import { SiGithub, SiThreads } from '@icons-pack/react-simple-icons';
 
 const navigation = [
@@ -11,11 +11,16 @@ const navigation = [
   { name: "About", href: "/about" },
 ];
 
+const GITHUB_USERNAME = "ardavv";
+const LINKEDIN_URL = "https://www.linkedin.com/in/ardav26/";
+const THREADS_URL = "https://www.threads.com/@ar_yaaa.__"; // Assuming Twitter/X handle
+const EMAIL_ADDRESS = "aryadavi276@gmail.com";
+
 const social = [
-  { name: "GitHub", href: "https://github.com/ardavv", icon: SiGithub },
-  { name: "LinkedIn", href: "https://www.linkedin.com/in/ardav26/", icon: Linkedin },
-  { name: "Threads", href: "https://twitter.com", icon: SiThreads },
-  { name: "Email", href: "aryadavi276@gmail.com", icon: Mail },
+  { name: "GitHub", href: `https://github.com/${GITHUB_USERNAME}`, icon: SiGithub },
+  { name: "LinkedIn", href: LINKEDIN_URL, icon: Linkedin },
+  { name: "Threads", href: THREADS_URL, icon: SiThreads },
+  { name: "Email", href: `mailto:${EMAIL_ADDRESS}`, icon: Mail },
 ];
 
 export function Footer() {
