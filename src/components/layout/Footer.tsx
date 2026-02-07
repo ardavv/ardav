@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Github, Linkedin, Mail, Twitter } from "lucide-react";
+import { SiGithub, SiThreads } from '@icons-pack/react-simple-icons';
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -11,10 +12,10 @@ const navigation = [
 ];
 
 const social = [
-  { name: "GitHub", href: "https://github.com", icon: Github },
-  { name: "LinkedIn", href: "https://linkedin.com", icon: Linkedin },
-  { name: "X", href: "https://twitter.com", icon: Twitter },
-  { name: "Email", href: "mailto:hello@example.com", icon: Mail },
+  { name: "GitHub", href: "https://github.com/ardavv", icon: SiGithub },
+  { name: "LinkedIn", href: "https://www.linkedin.com/in/ardav26/", icon: Linkedin },
+  { name: "Threads", href: "https://twitter.com", icon: SiThreads },
+  { name: "Email", href: "aryadavi276@gmail.com", icon: Mail },
 ];
 
 export function Footer() {

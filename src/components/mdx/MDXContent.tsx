@@ -62,18 +62,20 @@ const components = {
   img: CustomImage,
   pre: CustomPre,
   a: CustomLink,
+  h1: ({ children }: any) => <h1 className="text-3xl font-bold tracking-tight mt-8 mb-4 text-foreground">{children}</h1>,
+  h2: ({ children }: any) => <h2 className="text-2xl font-semibold tracking-tight mt-8 mb-4 text-foreground">{children}</h2>,
+  h3: ({ children }: any) => <h3 className="text-xl font-semibold tracking-tight mt-6 mb-3 text-foreground">{children}</h3>,
+  p: ({ children }: any) => <p className="leading-7 [&:not(:first-child)]:mt-4 text-muted-foreground">{children}</p>,
+  ul: ({ children }: any) => <ul className="my-6 ml-6 list-disc [&>li]:mt-2 text-muted-foreground">{children}</ul>,
+  ol: ({ children }: any) => <ol className="my-6 ml-6 list-decimal [&>li]:mt-2 text-muted-foreground">{children}</ol>,
+  li: ({ children }: any) => <li className="leading-7">{children}</li>,
+  strong: ({ children }: any) => <strong className="font-bold text-foreground">{children}</strong>,
+  blockquote: ({ children }: any) => <blockquote className="mt-6 border-l-2 border-primary pl-6 italic text-muted-foreground">{children}</blockquote>,
 };
 
 export function MDXContent({ source }: { source: string }) {
   return (
-    <div className="prose prose-zinc dark:prose-invert max-w-none 
-      prose-headings:font-bold prose-headings:tracking-tight 
-      prose-p:text-lg prose-p:leading-relaxed prose-p:text-foreground/90
-      
-      /* Remove default pre styling since we handle it custom */
-      prose-pre:bg-transparent prose-pre:p-0 prose-pre:m-0 prose-pre:border-none prose-pre:shadow-none
-      prose-img:m-0
-    ">
+    <div className="max-w-none">
       <MDXRemote source={source} components={components} />
     </div>
   );

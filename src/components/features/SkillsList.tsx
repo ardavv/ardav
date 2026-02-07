@@ -4,21 +4,23 @@ import { motion } from "framer-motion";
 
 const skillCategories = [
   {
-    title: "Frontend",
+    title: "Frontend & Mobile",
     skills: [
-      { name: "React", level: 90 },
-      { name: "Next.js", level: 85 },
-      { name: "TypeScript", level: 90 },
-      { name: "Tailwind CSS", level: 95 },
+      { name: "React / Next.js", level: 90 },
+      { name: "TypeScript", level: 85 },
+      { name: "Tailwind CSS", level: 90 },
+      { name: "React Native", level: 80 },
+      { name: "Android Java", level: 70 },
     ],
   },
   {
-    title: "Backend",
+    title: "Backend & Tools",
     skills: [
-      { name: "Node.js", level: 85 },
-      { name: "PostgreSQL", level: 80 },
-      { name: "Go", level: 75 },
-      { name: "Supabase", level: 85 },
+      { name: "Node.js / Express", level: 90 },
+      { name: "MySQL / SQL", level: 95 },
+      { name: "Supabase / Firebase", level: 85 },
+      { name: "Python / C++", level: 75 },
+      { name: "Docker / Git", level: 85 },
     ],
   },
 ];

@@ -1,0 +1,33 @@
+---
+title: "KangKeliling"
+summary: "A mobile app connecting users with traveling micro-businesses (UMKM) in real-time using Geolocation and Supabase."
+image: "/images/project-alpha.jpg"
+date: "2024-07-01"
+techStack: ["React Native", "Supabase", "Geolocation", "Google Maps API", "Node.js"]
+link: "https://github.com/fathur-m/kangkeliling"
+---
+
+## Overview
+
+**KangKeliling** was born out of a desire to support local street vendors (UMKM Keliling). Developed during the **Garuda Hacks 5.0 Hackathon**, this app solves a simple problem: *"Where is the Satay man right now?"*
+
+As the **Project Lead**, I oversaw the full-stack development of a prototype that enables users to track vendors on a live map.
+
+## Core Features
+
+### 1. Real-time Vendor Tracking
+Using **Supabase Realtime** capabilities, vendors verify their location which is instantly broadcasted to nearby users. This dynamic map display removes the uncertainty of waiting for mobile vendors.
+
+### 2. Geolocation Logic
+We implemented the **Haversine Formula** to calculate precise distances between users and vendors. This ensures that search results are relevant and sorted by proximity.
+
+### 3. Vendor Profiles
+Users can view vendor menus, ratings, and current status, helping small businesses build a digital presence without the overhead of major delivery platforms.
+
+## Challenges
+
+The biggest technical hurdle was optimizing live location updates to not drain battery on vendor devices while maintaining accuracy. We balanced update frequency and used efficient Supabase subscriptions to solve this.
+
+## Impact
+
+KangKeliling represents a fusion of technology and social impact, providing a digital lifeline to the informal economy sector.

@@ -1,5 +1,6 @@
-import { getPostBySlug, getAllPosts } from "@/lib/mdx";
+import { getBlogBySlug, getBlogs } from "@/lib/data";
 import { MDXContent } from "@/components/mdx/MDXContent";
+import NextImage from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -7,20 +8,18 @@ import { format, parseISO } from "date-fns";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function generateStaticParams() {
-  const posts = getAllPosts("blog");
+  const posts = await getBlogs();
   return posts.map((post) => ({ slug: post.slug }));
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function BlogLayout({ params }: { params: any }) {
   const { slug } = await params;
-  const post = getPostBySlug(slug, "blog");
+  const post = await getBlogBySlug(slug);
 
   if (!post) {
     notFound();
   }
-
-  const { metadata, content } = post;
 
   return (
     <article className="pb-20">
@@ -30,21 +29,36 @@ export default async function BlogLayout({ params }: { params: any }) {
 
       <div className="mx-auto max-w-2xl text-center mb-16">
         <div className="flex justify-center items-center gap-2 text-sm text-muted-foreground mb-6">
-           <time dateTime={metadata.date}>
-             {format(parseISO(metadata.date), "MMMM d, yyyy")}
-           </time>
-           {metadata.readingTime && (
+           {post.date && (
+             <time dateTime={post.date}>
+               {format(parseISO(post.date), "MMMM d, yyyy")}
+             </time>
+           )}
+           {post.reading_time && (
              <>
                <span>•</span>
-               <span>{metadata.readingTime}</span>
+               <span>{post.reading_time}</span>
              </>
            )}
         </div>
-        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight text-foreground">{metadata.title}</h1>
+        
+        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight text-foreground mb-8">{post.title}</h1>
+        
+        {post.image && (
+          <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border/50 shadow-lg">
+            <NextImage
+              src={post.image}
+              alt={post.title}
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+        )}
       </div>
 
       <div className="mx-auto max-w-2xl">
-        <MDXContent source={content} />
+        {post.content && <MDXContent source={post.content} />}
       </div>
     </article>
   );

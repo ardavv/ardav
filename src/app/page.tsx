@@ -4,12 +4,15 @@ import { ContributionGraph } from "@/components/features/ContributionGraph";
 import { TechStack } from "@/components/sections/TechStack";
 import { ProjectCard } from "@/components/features/ProjectCard";
 import { BlogCard } from "@/components/features/BlogCard";
-import { getAllPosts } from "@/lib/mdx";
+import { getProjects, getBlogs } from "@/lib/data";
 import { ArrowRight } from "lucide-react";
 
-export default function Home() {
-  const projects = getAllPosts("projects").slice(0, 2);
-  const posts = getAllPosts("blog").slice(0, 3);
+export default async function Home() {
+  const allProjects = await getProjects();
+  const allBlogs = await getBlogs();
+
+  const projects = allProjects.slice(0, 2);
+  const posts = allBlogs.slice(0, 3);
 
   return (
     <div className="space-y-24 pb-20">

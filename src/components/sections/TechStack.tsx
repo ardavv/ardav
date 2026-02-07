@@ -1,11 +1,11 @@
 export function TechStack() {
   const stack = [
-    "React", "Next.js", "TypeScript", "Tailwind CSS", "Framer Motion", "Node.js", "PostgreSQL", "Git"
+    "React", "Next.js", "TypeScript", "Node.js", "Python", "Java", "C/C++", "Go", "Wordpress", "MySQL", "PostgreSQL", "MongoDB", "Tailwind CSS", "Framer Motion", "Socket.io", "Docker", "Kubernetes", "Git", "GitHub"
   ];
 
   return (
     <section className="py-10">
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Tech Sack</h3>
+      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Tech Stack</h3>
       <div className="flex flex-wrap gap-2">
         {stack.map((tech) => (
           <span 

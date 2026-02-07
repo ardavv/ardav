@@ -2,16 +2,28 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { Project } from "@/lib/data";
 import { ArrowUpRight } from "lucide-react";
-import { PostMetadata } from "@/lib/mdx";
 
-export function ProjectCard({ project }: { project: PostMetadata }) {
+import Image from "next/image";
+
+export function ProjectCard({ project }: { project: Project }) {
   return (
     <motion.div
       whileHover={{ y: -5 }}
-      className="group relative flex flex-col justify-between rounded-xl border border-border/50 bg-card p-6 transition-colors hover:bg-accent/5"
+      className="group relative flex flex-col justify-between rounded-xl border border-border/50 bg-card overflow-hidden transition-colors hover:bg-accent/5"
     >
-      <div>
+      {project.image && (
+        <div className="relative aspect-video w-full overflow-hidden border-b border-border/50">
+          <Image
+            src={project.image}
+            alt={project.title}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        </div>
+      )}
+      <div className="p-6">
         <div className="flex justify-between items-start mb-4">
           <h3 className="text-xl font-semibold group-hover:text-primary transition-colors">
             {project.title}
@@ -26,7 +38,7 @@ export function ProjectCard({ project }: { project: PostMetadata }) {
       </div>
       
       <div className="flex flex-wrap gap-2 mt-auto">
-        {project.techStack?.map((tech) => (
+        {project.tech_stack?.map((tech) => (
           <span
             key={tech}
             className="rounded-md bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground"

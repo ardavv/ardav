@@ -13,11 +13,7 @@ const socialLinks = [
   { name: "Email", href: "mailto:hello@example.com", icon: Mail },
 ];
 
-const stats = [
-  { label: "Years Experience", value: "4+" },
-  { label: "Projects Completed", value: "20+" },
-  { label: "Happy Clients", value: "10+" },
-];
+import { Stats } from "@/components/features/Stats";
 
 export function Hero() {
   return (
@@ -40,20 +36,23 @@ export function Hero() {
 
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-             <span>Hey, my friends! 👋</span>
+            <span>Hei Tech Bros! 👋</span>
           </div>
-          
+
           <div className="text-lg text-muted-foreground">
-            <span className="font-semibold text-foreground">Arya</span> — Software Engineer
+            <span className="font-semibold text-foreground">Arya Davi S.</span> —
+            Software Engineer
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground">
             I craft digital products that people actually enjoy using.
           </h1>
         </div>
-        
+
         <p className="max-w-xl text-lg text-muted-foreground leading-relaxed">
-          Not just functional — delightful. I obsess over the details that make software feel right. Currently based in Indonesia, shipping pixels worldwide.
+          Not just functional — delightful. I obsess over the details that make
+          software feel right. Currently based in Indonesia, shipping pixels
+          worldwide.
         </p>
 
         <div className="flex gap-4 pt-2">
@@ -86,14 +85,7 @@ export function Hero() {
           ))}
         </div>
 
-        <div className="grid grid-cols-3 gap-8 pt-12 border-t border-border/50 mt-12">
-          {stats.map((stat) => (
-            <div key={stat.label}>
-              <div className="text-3xl font-bold text-foreground">{stat.value}</div>
-              <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
-            </div>
-          ))}
-        </div>
+        <Stats className="mt-12" />
       </motion.div>
     </section>
   );

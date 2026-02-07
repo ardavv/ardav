@@ -1,13 +1,13 @@
 import { ProjectCard } from "@/components/features/ProjectCard";
-import { getAllPosts } from "@/lib/mdx";
+import { getProjects } from "@/lib/data";
 
 export const metadata = {
   title: "Projects - Arya",
   description: "Showcase of my digital products and experiments.",
 };
 
-export default function ProjectsPage() {
-  const projects = getAllPosts("projects");
+export default async function ProjectsPage() {
+  const projects = await getProjects();
 
   return (
     <div className="space-y-12 pb-20">

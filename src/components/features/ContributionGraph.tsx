@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {ActivityCalendar} from "react-activity-calendar";
 import { useTheme } from "next-themes";
 import Link from "next/link";
@@ -13,6 +13,9 @@ export function ContributionGraph() {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { theme } = useTheme();
+
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -37,6 +40,34 @@ export function ContributionGraph() {
     fetchData();
   }, []);
 
+  // Auto-scroll to the end (latest contributions)
+  useEffect(() => {
+    if (!loading && data.length > 0 && scrollContainerRef.current) {
+        // Function to scroll to the end
+        const scrollToEnd = () => {
+             if (scrollContainerRef.current) {
+                 scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth;
+             }
+        }
+
+        // Try scrolling immediately
+        scrollToEnd();
+
+        // Retry multiple times to ensure layout is fully computed
+        const intervalId = setInterval(scrollToEnd, 50);
+        
+        // Stop retrying after 2 seconds
+        const timeoutId = setTimeout(() => {
+            clearInterval(intervalId);
+        }, 2000);
+
+        return () => {
+            clearInterval(intervalId);
+            clearTimeout(timeoutId);
+        };
+    }
+  }, [loading, data]);
+
   if (loading) {
     return (
         <div className="w-full h-32 animate-pulse bg-muted rounded-xl border border-border/50" />
@@ -59,7 +90,10 @@ export function ContributionGraph() {
         </Link>
       </div>
       
-      <div className="w-full overflow-hidden overflow-x-auto p-4 border border-border/50 rounded-xl bg-card/50">
+      <div 
+        ref={scrollContainerRef}
+        className="w-full overflow-x-auto p-4 border border-border/50 rounded-xl bg-card/50"
+      >
         <ActivityCalendar
             data={data}
             theme={{
