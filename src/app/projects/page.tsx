@@ -1,6 +1,8 @@
 import { ProjectCard } from "@/components/features/ProjectCard";
 import { getProjects } from "@/lib/data";
 
+export const revalidate = 60;
+
 export const metadata = {
   title: "Projects - Arya",
   description: "Showcase of my digital products and experiments.",

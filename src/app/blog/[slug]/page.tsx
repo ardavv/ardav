@@ -6,6 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 
+export const revalidate = 60;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function generateStaticParams() {
   const posts = await getBlogs();

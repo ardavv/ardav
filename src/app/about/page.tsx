@@ -5,6 +5,8 @@ import Image from "next/image";
 
 import { getExperience } from "@/lib/data";
 
+export const revalidate = 60;
+
 export const metadata = {
   title: "About - Arya",
   description: "More about my background and experience.",

@@ -1,6 +1,8 @@
 import { BlogCard } from "@/components/features/BlogCard";
 import { getBlogs } from "@/lib/data";
 
+export const revalidate = 60;
+
 export const metadata = {
   title: "Blog - Arya",
   description: "Thoughts on software development, design, and product.",

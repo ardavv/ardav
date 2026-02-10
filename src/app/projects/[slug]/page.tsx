@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Globe } from "lucide-react";
 import Link from "next/link";
 
+export const revalidate = 60;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function generateStaticParams() {
   const posts = await getProjects();

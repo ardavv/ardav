@@ -7,6 +7,8 @@ import { BlogCard } from "@/components/features/BlogCard";
 import { getProjects, getBlogs } from "@/lib/data";
 import { ArrowRight } from "lucide-react";
 
+export const revalidate = 60;
+
 export default async function Home() {
   const allProjects = await getProjects();
   const allBlogs = await getBlogs();
