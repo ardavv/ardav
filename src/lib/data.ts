@@ -22,6 +22,13 @@ export interface Blog {
   content?: string; // Tambahkan properti opsional ini
 }
 
+export interface Experience {
+  role: string;
+  company: string;
+  date_range: string;
+  description: string;
+}
+
 export async function getProjects(): Promise<Project[]> {
   try {
     const posts = getAllPosts("projects");
@@ -92,6 +99,35 @@ export async function getBlogBySlug(slug: string): Promise<Blog | null> {
   };
 }
 
-export async function getExperience() {
-  return [];
+export async function getExperience(): Promise<Experience[]> {
+  return [
+    {
+      role: "IT Quality Assurance Intern",
+      company: "Multifinance Company",
+      date_range: "October 2025 - Present",
+      description:
+        "Mengeksekusi pengujian perangkat lunak dan memastikan keandalan sistem aplikasi secara menyeluruh.",
+    },
+    {
+      role: "Co-founder & Lead Developer",
+      company: "GokilTech",
+      date_range: "August 2025 - Present",
+      description:
+        "Memimpin pengembangan perangkat lunak dan mengelola deployment produksi untuk berbagai proyek web menggunakan Next.js, Node.js, dan Express.js.",
+    },
+    {
+      role: "PSTE Directorate Intern",
+      company: "Ministry of Communication and Digital (Komdigi)",
+      date_range: "July 2024 - Early 2026",
+      description:
+        "Membantu operasional digital pemerintahan dan penyusunan laporan akhir.",
+    },
+    {
+      role: "Quality Assurance Tester Intern",
+      company: "PT Sinergi Informatika Semen Indonesia",
+      date_range: "July 2024 - September 2024",
+      description:
+        "Melakukan pengujian Quality Assurance terstruktur untuk menjaga stabilitas aplikasi.",
+    },
+  ];
 }
