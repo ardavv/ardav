@@ -1,5 +1,6 @@
 import { ProjectCard } from "@/components/features/ProjectCard";
 import { getProjects } from "@/lib/data";
+import { PageContainer } from "@/components/layout/PageContainer"; // Tambah import
 
 export const revalidate = 60;
 
@@ -12,11 +13,12 @@ export default async function ProjectsPage() {
   const projects = await getProjects();
 
   return (
-    <div className="space-y-12 pb-20">
+    <PageContainer className="space-y-12">
       <div className="space-y-4">
         <h1 className="text-4xl font-bold tracking-tight">Projects</h1>
         <p className="text-muted-foreground text-lg max-w-xl">
-          A collection of digital products, experiments, and open-source contributions I&apos;ve worked on.
+          A collection of digital products, experiments, and open-source
+          contributions I&apos;ve worked on.
         </p>
       </div>
 
@@ -25,6 +27,6 @@ export default async function ProjectsPage() {
           <ProjectCard key={project.slug} project={project} />
         ))}
       </div>
-    </div>
+    </PageContainer>
   );
 }

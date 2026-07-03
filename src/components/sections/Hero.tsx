@@ -6,10 +6,14 @@ import { SiGithub, SiThreads } from "@icons-pack/react-simple-icons";
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { Stats } from "@/components/features/Stats";
+
+// Import komponen PixelBlast yang baru saja kamu buat
+import PixelBlast from "@/components/ui/PixelBlast";
 
 const GITHUB_USERNAME = "ardavv";
 const LINKEDIN_URL = "https://www.linkedin.com/in/ardav26/";
-const THREADS_URL = "https://www.threads.com/@ar_yaaa.__"; // Assuming Twitter/X handle
+const THREADS_URL = "https://www.threads.com/@ar_yaaa.__";
 const EMAIL_ADDRESS = "aryadavi276@gmail.com";
 
 const socialLinks = [
@@ -23,16 +27,39 @@ const socialLinks = [
   { name: "Email", href: `mailto:${EMAIL_ADDRESS}`, icon: Mail },
 ];
 
-import { Stats } from "@/components/features/Stats";
-
 export function Hero() {
   return (
-    <section className="py-20 flex flex-col justify-center min-h-[60vh]">
+    // Mengubah py-20 menjadi pt-40 pb-20 untuk memberi ruang bagi Navbar
+    <section className="relative pt-40 pb-20 flex flex-col justify-center min-h-[60vh]">
+      {/* Container Background - Sekarang bersih tanpa trik negatif kalkulasi */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-screen h-full -z-10 opacity-60 overflow-hidden pointer-events-auto">
+        <PixelBlast
+          variant="diamond"
+          pixelSize={4}
+          color="#B497CF"
+          patternScale={2}
+          patternDensity={1}
+          pixelSizeJitter={0}
+          enableRipples
+          rippleSpeed={0.4}
+          rippleThickness={0.12}
+          rippleIntensityScale={1.5}
+          liquid={false}
+          liquidStrength={0.12}
+          liquidRadius={1.2}
+          liquidWobbleSpeed={5}
+          speed={0.5}
+          edgeFade={0.25}
+          transparent
+        />
+      </div>
+
+      {/* Konten Utama Hero */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="space-y-8"
+        className="relative z-10 space-y-8"
       >
         <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-border/50">
           <Image
@@ -46,36 +73,37 @@ export function Hero() {
 
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Hi, I'm Arya! 👋</span>
+            <span>Hi, I&apos;m Arya 👋</span>
           </div>
 
           <div className="text-lg text-muted-foreground">
             <span className="font-semibold text-foreground">Arya Davi S.</span>{" "}
-            — Software Engineer
+            — AI Engineer
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground">
-            I build functional and delightful software.
+            I craft digital products that people actually enjoy using.
           </h1>
         </div>
 
-        <p className="max-w-xl text-lg text-muted-foreground leading-relaxed">
-          I obsess over the details that make software feel right.
+        <p className="max-w-xl text-lg text-foreground leading-relaxed">
+          I build functional and delightful software. I obsess over the details
+          that make software feel right. Currently based in Indonesia, shipping
+          pixels worldwide.
         </p>
 
-        <div className="flex gap-4 pt-2">
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <Link
             href="/contact"
-            className="inline-flex h-10 items-center justify-center rounded-full bg-foreground px-6 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+            className="inline-flex w-full sm:w-auto h-10 items-center justify-center rounded-full bg-foreground px-6 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
           >
-            Let&apos;s talk
+            Let's talk
           </Link>
           <Link
-            href="https://aryadavi-portfolio.my.canva.site"
-            target="_blank"
-            className="inline-flex h-10 items-center justify-center rounded-full border border-border bg-background px-6 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+            href="/projects"
+            className="inline-flex w-full sm:w-auto h-10 items-center justify-center rounded-full border border-border bg-background px-6 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
           >
-            View Portfolio Details
+            View Projects
           </Link>
         </div>
 

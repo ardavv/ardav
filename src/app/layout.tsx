@@ -35,7 +35,7 @@ export default function RootLayout({
       >
         <Preloader />
         <Navbar />
-        <main className="mx-auto max-w-5xl px-6 pt-32">{children}</main>
+        <main className="mx-auto max-w-5xl px-6">{children}</main>
         <Footer />
       </body>
     </html>

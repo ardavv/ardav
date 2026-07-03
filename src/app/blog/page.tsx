@@ -1,5 +1,6 @@
 import { BlogCard } from "@/components/features/BlogCard";
 import { getBlogs } from "@/lib/data";
+import { PageContainer } from "@/components/layout/PageContainer"; // Tambah import
 
 export const revalidate = 60;
 
@@ -12,7 +13,7 @@ export default async function BlogPage() {
   const posts = await getBlogs();
 
   return (
-    <div className="space-y-12 pb-20">
+    <PageContainer className="space-y-12">
       <div className="space-y-4">
         <h1 className="text-4xl font-bold tracking-tight">Writing</h1>
         <p className="text-muted-foreground text-lg max-w-xl">
@@ -25,6 +26,6 @@ export default async function BlogPage() {
           <BlogCard key={post.slug} post={post} />
         ))}
       </div>
-    </div>
+    </PageContainer>
   );
 }

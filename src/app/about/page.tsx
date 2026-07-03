@@ -4,6 +4,7 @@ import { Stats } from "@/components/features/Stats";
 import Image from "next/image";
 
 import { getExperience } from "@/lib/data";
+import { PageContainer } from "@/components/layout/PageContainer";
 
 export const revalidate = 60;
 
@@ -16,7 +17,7 @@ export default async function AboutPage() {
   const experience = await getExperience();
 
   return (
-    <div className="space-y-16 pb-20">
+    <PageContainer className="space-y-16">
       <section className="space-y-8">
         <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 border-b border-border/40 pb-12">
           <div className="relative h-32 w-32 overflow-hidden rounded-full border-2 border-border/50">
@@ -44,8 +45,9 @@ export default async function AboutPage() {
             React ecosystem and modern web technologies.
           </p>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            When I&apos;m not coding, I enjoy reading about latest technology updates,
-            watching Programmer Zaman Now before sleep 😁, and exploring new coffee shops.
+            When I&apos;m not coding, I enjoy reading about latest technology
+            updates, watching Programmer Zaman Now before sleep 😁, and
+            exploring new coffee shops.
           </p>
         </div>
 
@@ -61,6 +63,6 @@ export default async function AboutPage() {
         <h2 className="text-2xl font-bold tracking-tight mb-8">Skills</h2>
         <SkillsList />
       </section>
-    </div>
+    </PageContainer>
   );
 }
