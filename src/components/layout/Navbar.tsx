@@ -25,8 +25,8 @@ export function Navbar() {
               key={item.path}
               href={item.path}
               className={cn(
-                "relative px-4 py-2 text-sm font-medium transition-colors hover:text-foreground",
-                isActive ? "text-foreground" : "text-muted-foreground"
+                "relative px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium transition-colors hover:text-foreground",
+                isActive ? "text-foreground" : "text-muted-foreground",
               )}
             >
               {isActive && (

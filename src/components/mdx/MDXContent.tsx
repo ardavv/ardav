@@ -33,11 +33,16 @@ function CustomPre({ children, ...props }: any) {
         <div className="h-3 w-3 rounded-full bg-[#ff5f56]" />
         <div className="h-3 w-3 rounded-full bg-[#ffbd2e]" />
         <div className="h-3 w-3 rounded-full bg-[#27c93f]" />
-        <span className="ml-2 text-xs text-muted-foreground font-mono opacity-50">terminal</span>
+        <span className="ml-2 text-xs text-muted-foreground font-mono opacity-50">
+          terminal
+        </span>
       </div>
       {/* Code Content */}
       <div className="p-4 overflow-x-auto">
-        <pre {...props} className="bg-transparent p-0 m-0 !bg-transparent font-mono text-sm leading-relaxed">
+        <pre
+          {...props}
+          className="bg-transparent p-0 m-0 !bg-transparent font-mono text-sm leading-relaxed"
+        >
           {children}
         </pre>
       </div>
@@ -49,11 +54,11 @@ function CustomPre({ children, ...props }: any) {
 function CustomLink(props: any) {
   const isExternal = props.href?.startsWith("http");
   return (
-    <a 
-      {...props} 
+    <a
+      {...props}
       target={isExternal ? "_blank" : undefined}
       rel={isExternal ? "noopener noreferrer" : undefined}
-      className="font-medium text-primary hover:text-primary/80 hover:underline underline-offset-4 transition-colors" 
+      className="font-medium text-primary hover:text-primary/80 hover:underline underline-offset-4 transition-colors"
     />
   );
 }
@@ -62,15 +67,45 @@ const components = {
   img: CustomImage,
   pre: CustomPre,
   a: CustomLink,
-  h1: ({ children }: any) => <h1 className="text-3xl font-bold tracking-tight mt-8 mb-4 text-foreground">{children}</h1>,
-  h2: ({ children }: any) => <h2 className="text-2xl font-semibold tracking-tight mt-8 mb-4 text-foreground">{children}</h2>,
-  h3: ({ children }: any) => <h3 className="text-xl font-semibold tracking-tight mt-6 mb-3 text-foreground">{children}</h3>,
-  p: ({ children }: any) => <p className="leading-7 [&:not(:first-child)]:mt-4 text-muted-foreground">{children}</p>,
-  ul: ({ children }: any) => <ul className="my-6 ml-6 list-disc [&>li]:mt-2 text-muted-foreground">{children}</ul>,
-  ol: ({ children }: any) => <ol className="my-6 ml-6 list-decimal [&>li]:mt-2 text-muted-foreground">{children}</ol>,
+  h1: ({ children }: any) => (
+    <h1 className="text-3xl font-bold tracking-tight mt-8 mb-4 text-foreground">
+      {children}
+    </h1>
+  ),
+  h2: ({ children }: any) => (
+    <h2 className="text-2xl font-semibold tracking-tight mt-8 mb-4 text-foreground">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }: any) => (
+    <h3 className="text-xl font-semibold tracking-tight mt-6 mb-3 text-foreground">
+      {children}
+    </h3>
+  ),
+  p: ({ children }: any) => (
+    <p className="leading-7 [&:not(:first-child)]:mt-4 text-muted-foreground">
+      {children}
+    </p>
+  ),
+  ul: ({ children }: any) => (
+    <ul className="my-6 ml-6 list-disc [&>li]:mt-2 text-muted-foreground">
+      {children}
+    </ul>
+  ),
+  ol: ({ children }: any) => (
+    <ol className="my-6 ml-6 list-decimal [&>li]:mt-2 text-muted-foreground">
+      {children}
+    </ol>
+  ),
   li: ({ children }: any) => <li className="leading-7">{children}</li>,
-  strong: ({ children }: any) => <strong className="font-bold text-foreground">{children}</strong>,
-  blockquote: ({ children }: any) => <blockquote className="mt-6 border-l-2 border-primary pl-6 italic text-muted-foreground">{children}</blockquote>,
+  strong: ({ children }: any) => (
+    <strong className="font-bold text-foreground">{children}</strong>
+  ),
+  blockquote: ({ children }: any) => (
+    <blockquote className="mt-6 border-l-2 border-primary pl-6 italic text-muted-foreground">
+      {children}
+    </blockquote>
+  ),
 };
 
 export function MDXContent({ source }: { source: string }) {

@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Linkedin, Mail} from "lucide-react";
-import { SiGithub, SiThreads } from '@icons-pack/react-simple-icons';
+import { Linkedin, Mail } from "lucide-react";
+import { SiGithub, SiThreads } from "@icons-pack/react-simple-icons";
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,11 @@ const THREADS_URL = "https://www.threads.com/@ar_yaaa.__"; // Assuming Twitter/X
 const EMAIL_ADDRESS = "aryadavi276@gmail.com";
 
 const socialLinks = [
-  { name: "GitHub", href: `https://github.com/${GITHUB_USERNAME}`, icon: SiGithub },
+  {
+    name: "GitHub",
+    href: `https://github.com/${GITHUB_USERNAME}`,
+    icon: SiGithub,
+  },
   { name: "LinkedIn", href: LINKEDIN_URL, icon: Linkedin },
   { name: "Threads", href: THREADS_URL, icon: SiThreads },
   { name: "Email", href: `mailto:${EMAIL_ADDRESS}`, icon: Mail },
@@ -42,23 +46,21 @@ export function Hero() {
 
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Hei Tech Bros! 👋</span>
+            <span>Hi, I'm Arya! 👋</span>
           </div>
 
           <div className="text-lg text-muted-foreground">
-            <span className="font-semibold text-foreground">Arya Davi S.</span> —
-            Software Engineer
+            <span className="font-semibold text-foreground">Arya Davi S.</span>{" "}
+            — Software Engineer
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground">
-            I craft digital products that people actually enjoy using.
+            I build functional and delightful software.
           </h1>
         </div>
 
         <p className="max-w-xl text-lg text-muted-foreground leading-relaxed">
-          Not just functional — delightful. I obsess over the details that make
-          software feel right. Currently based in Indonesia, shipping pixels
-          worldwide.
+          I obsess over the details that make software feel right.
         </p>
 
         <div className="flex gap-4 pt-2">

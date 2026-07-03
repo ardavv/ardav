@@ -1,9 +1,18 @@
 ---
 title: "RS Inventory (Microservices)"
 summary: "A scalable hospital inventory system built with Microservices architecture, Node.js, and Docker, featuring a custom API Gateway and rate limiting."
-image: "/images/project-alpha.jpg"
+image: "/images/rs-inventory-fix.png"
 date: "2025-06-15"
-techStack: ["Node.js", "Express", "Microservices", "Docker", "MySQL", "Railway", "Kubernetes"]
+techStack:
+  [
+    "Node.js",
+    "Express",
+    "Microservices",
+    "Docker",
+    "MySQL",
+    "Railway",
+    "Kubernetes",
+  ]
 link: "https://github.com/fathur-m/rs-inventory"
 ---
 
@@ -16,6 +25,7 @@ We adopted a **Microservices Architecture** to ensure independent scalability an
 ## Architecture
 
 Does a hospital inventory need microservices? For this project, the goal was to simulate high-scale operations. We split the application into 5 distinct services:
+
 1.  **Auth Service**: JWT-based authentication.
 2.  **Inventory Service**: Core stock management.
 3.  **Notification Service**: Alerts for low stock levels.
@@ -25,6 +35,7 @@ Does a hospital inventory need microservices? For this project, the goal was to 
 All services communicate via a centralized **API Gateway** built with Node.js/Express.
 
 ### Data Isolation
+
 We enforced strict data isolation by provisioning separate **MySQL databases** for each service on **Railway**. This prevents tight coupling and allows services to evolve independently.
 
 ## Technical Highlights

@@ -1,81 +1,97 @@
+import { getAllPosts, getPostBySlug as getLocalPostBySlug } from "./mdx";
 
-import { supabase } from "./supabase";
-import { Database } from "@/types/supabase";
+export interface Project {
+  title: string;
+  summary: string;
+  image?: string | null;
+  date: string;
+  slug: string;
+  tech_stack?: string[] | null;
+  link?: string | null;
+  content?: string; // Tambahkan properti opsional ini
+}
 
-export type Project = Database["public"]["Tables"]["projects"]["Row"];
-export type Blog = Database["public"]["Tables"]["blogs"]["Row"];
-export type Experience = Database["public"]["Tables"]["experience"]["Row"];
+export interface Blog {
+  title: string;
+  summary: string;
+  image?: string | null;
+  date: string;
+  slug: string;
+  reading_time?: string | null;
+  published: boolean;
+  content?: string; // Tambahkan properti opsional ini
+}
 
-export async function getProjects() {
-  const { data, error } = await supabase
-    .from("projects")
-    .select("*")
-    .order("date", { ascending: false });
-
-  if (error) {
-    console.error("Error fetching projects:", error);
+export async function getProjects(): Promise<Project[]> {
+  try {
+    const posts = getAllPosts("projects");
+    return posts.map((p) => ({
+      title: p.title,
+      summary: p.summary,
+      image: p.image || null,
+      date: p.date,
+      slug: p.slug,
+      tech_stack: p.techStack || null,
+      link: p.link || null,
+    }));
+  } catch (error) {
+    console.error("Error loading local projects:", error);
     return [];
   }
-
-  return data;
 }
 
-export async function getProjectBySlug(slug: string) {
-  const { data, error } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("slug", slug)
-    .single();
+// PERBAIKAN: Masukkan post.content ke dalam return object
+export async function getProjectBySlug(slug: string): Promise<Project | null> {
+  const post = getLocalPostBySlug(slug, "projects");
+  if (!post) return null;
 
-  if (error) {
-    console.error(`Error fetching project with slug ${slug}:`, error);
-    return null;
-  }
-
-  return data;
+  return {
+    title: post.metadata.title,
+    summary: post.metadata.summary,
+    image: post.metadata.image || null,
+    date: post.metadata.date,
+    slug: post.metadata.slug,
+    tech_stack: post.metadata.techStack || null,
+    link: post.metadata.link || null,
+    content: post.content, // Jalur konten diperbaiki di sini
+  };
 }
 
-export async function getBlogs() {
-  const { data, error } = await supabase
-    .from("blogs")
-    .select("*")
-    .eq("published", true)
-    .order("date", { ascending: false });
-
-  if (error) {
-    console.error("Error fetching blogs:", error);
+export async function getBlogs(): Promise<Blog[]> {
+  try {
+    const posts = getAllPosts("blog");
+    return posts.map((p) => ({
+      title: p.title,
+      summary: p.summary,
+      image: p.image || null,
+      date: p.date,
+      slug: p.slug,
+      reading_time: p.readingTime || null,
+      published: true,
+    }));
+  } catch (error) {
+    console.error("Error loading local blogs:", error);
     return [];
   }
-
-  return data;
 }
 
-export async function getBlogBySlug(slug: string) {
-  const { data, error } = await supabase
-    .from("blogs")
-    .select("*")
-    .eq("slug", slug)
-    .eq("published", true)
-    .single();
+// PERBAIKAN: Masukkan post.content ke dalam return object
+export async function getBlogBySlug(slug: string): Promise<Blog | null> {
+  const post = getLocalPostBySlug(slug, "blog");
+  if (!post) return null;
 
-  if (error) {
-    console.error(`Error fetching blog with slug ${slug}:`, error);
-    return null;
-  }
-
-  return data;
+  return {
+    title: post.metadata.title,
+    summary: post.metadata.summary,
+    image: post.metadata.image || null,
+    date: post.metadata.date,
+    slug: post.metadata.slug,
+    reading_time: post.metadata.readingTime || null,
+    published: true,
+    content: post.content, // Jalur konten diperbaiki di sini
+  };
 }
 
 export async function getExperience() {
-  const { data, error } = await supabase
-    .from("experience")
-    .select("*")
-    .order("display_order", { ascending: true });
-
-  if (error) {
-    console.error("Error fetching experience:", error);
-    return [];
-  }
-
-  return data;
+  return [];
 }
