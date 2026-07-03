@@ -97,7 +97,7 @@ export function Hero() {
             href="/contact"
             className="inline-flex w-full sm:w-auto h-10 items-center justify-center rounded-full bg-foreground px-6 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
           >
-            Let's talk
+            Let&apos;s talk
           </Link>
           <Link
             href="/projects"
