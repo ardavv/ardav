@@ -8,17 +8,30 @@ export function Preloader() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Disable scrolling when loading
-    document.body.style.overflow = "hidden";
+    let isMounted = true;
+    let delayTimer: NodeJS.Timeout;
 
-    // Simulate loading time (2 seconds)
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      document.body.style.overflow = "unset";
-    }, 2000);
+    // Membungkus logika ke dalam setTimeout 0ms melempar eksekusi ke antrean macro-task.
+    // Ini menghindari bentrok dengan aturan linter React yang melarang update state sinkron di dalam useEffect.
+    const initTimer = setTimeout(() => {
+      const hasLoaded = sessionStorage.getItem("portfolio_loaded");
+
+      if (hasLoaded) {
+        if (isMounted) setIsLoading(false);
+      } else {
+        document.body.style.overflow = "hidden";
+        delayTimer = setTimeout(() => {
+          if (isMounted) setIsLoading(false);
+          document.body.style.overflow = "unset";
+          sessionStorage.setItem("portfolio_loaded", "true");
+        }, 2000);
+      }
+    }, 0);
 
     return () => {
-      clearTimeout(timer);
+      isMounted = false;
+      clearTimeout(initTimer);
+      clearTimeout(delayTimer);
       document.body.style.overflow = "unset";
     };
   }, []);

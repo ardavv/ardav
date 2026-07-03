@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Linkedin, Mail } from "lucide-react";
-import { SiGithub, SiThreads } from '@icons-pack/react-simple-icons';
+import { SiGithub, SiThreads } from "@icons-pack/react-simple-icons";
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -17,7 +17,11 @@ const THREADS_URL = "https://www.threads.com/@ar_yaaa.__"; // Assuming Twitter/X
 const EMAIL_ADDRESS = "aryadavi276@gmail.com";
 
 const social = [
-  { name: "GitHub", href: `https://github.com/${GITHUB_USERNAME}`, icon: SiGithub },
+  {
+    name: "GitHub",
+    href: `https://github.com/${GITHUB_USERNAME}`,
+    icon: SiGithub,
+  },
   { name: "LinkedIn", href: LINKEDIN_URL, icon: Linkedin },
   { name: "Threads", href: THREADS_URL, icon: SiThreads },
   { name: "Email", href: `mailto:${EMAIL_ADDRESS}`, icon: Mail },
@@ -29,12 +33,14 @@ export function Footer() {
       <div className="mx-auto max-w-3xl px-6">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4 mb-20">
           <div className="md:col-span-1">
-            <h3 className="text-sm font-semibold text-foreground mb-4">Navigate</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-4">
+              Navigate
+            </h3>
             <ul className="space-y-3">
               {navigation.map((item) => (
                 <li key={item.name}>
-                  <Link 
-                    href={item.href} 
+                  <Link
+                    href={item.href}
                     className="text-muted-foreground hover:text-foreground transition-colors text-sm"
                   >
                     {item.name}
@@ -44,7 +50,9 @@ export function Footer() {
             </ul>
           </div>
           <div className="md:col-span-1">
-            <h3 className="text-sm font-semibold text-foreground mb-4">Connect</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-4">
+              Connect
+            </h3>
             <ul className="space-y-3">
               {social.map((item) => (
                 <li key={item.name}>
@@ -62,10 +70,11 @@ export function Footer() {
             </ul>
           </div>
         </div>
-        
+
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-8 border-t border-border/40 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
-            DM for <span className="text-white">Partnership</span>
+            DM for{" "}
+            <span className="text-foreground font-medium">Partnership</span>
           </div>
           <p>© {new Date().getFullYear()} Arya</p>
         </div>
