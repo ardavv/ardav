@@ -17,6 +17,7 @@ export const metadata: Metadata = {
 };
 
 import { Preloader } from "@/components/layout/Preloader";
+import { Analytics } from "@vercel/analytics/next";
 
 // ... imports
 
@@ -37,6 +38,7 @@ export default function RootLayout({
         <Navbar />
         <main className="mx-auto max-w-5xl px-6">{children}</main>
         <Footer />
+        <Analytics />
       </body>
     </html>
   );
