@@ -8,7 +8,7 @@ function CustomImage({ src, alt, title }: any) {
     // REVISI 1: Ubah <figure> menjadi <span>, tambahkan utility 'block'
     <span className="my-8 block">
       {/* REVISI 2: Ubah div menjadi span, tambahkan utility 'block' */}
-      <span className="relative block overflow-hidden rounded-xl border border-border/50 bg-muted/20">
+      <span className="relative block w-full aspect-video overflow-hidden rounded-xl border border-border/50 bg-muted/20">
         <Image
           src={src}
           alt={alt || "Project Image"}
