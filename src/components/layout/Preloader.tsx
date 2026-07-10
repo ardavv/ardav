@@ -69,7 +69,7 @@ export function Preloader() {
               transition={{ delay: 0.2, duration: 0.5 }}
               className="text-2xl font-bold tracking-tight text-foreground"
             >
-              Arya
+              Arya's Portfolio
             </motion.h1>
 
             {/* Loading Bar */}
