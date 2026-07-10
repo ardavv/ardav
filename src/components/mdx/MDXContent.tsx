@@ -5,25 +5,28 @@ import { cn } from "@/lib/utils";
 // Custom Image Component with Capacitor
 function CustomImage({ src, alt, title }: any) {
   return (
-    <figure className="my-8">
-      <div className="relative overflow-hidden rounded-xl border border-border/50 bg-muted/20">
+    // REVISI 1: Ubah <figure> menjadi <span>, tambahkan utility 'block'
+    <span className="my-8 block">
+      {/* REVISI 2: Ubah div menjadi span, tambahkan utility 'block' */}
+      <span className="relative block overflow-hidden rounded-xl border border-border/50 bg-muted/20">
         <Image
           src={src}
-          alt={alt}
-          width={1200}
-          height={630}
-          className="w-full object-cover"
+          alt={alt || "Project Image"}
+          // Pastikan prop layout/fill di sini sesuai dengan kebutuhanmu sebelumnya
+          fill
+          className="object-cover"
         />
-      </div>
+      </span>
+
+      {/* Jika kamu punya caption/title, gunakan span juga alih-alih figcaption */}
       {title && (
-        <figcaption className="mt-3 text-center text-sm italic text-muted-foreground font-medium">
+        <span className="mt-2 block text-center text-sm text-muted-foreground">
           {title}
-        </figcaption>
+        </span>
       )}
-    </figure>
+    </span>
   );
 }
-
 // Custom Pre/Code Block Component
 function CustomPre({ children, ...props }: any) {
   return (
