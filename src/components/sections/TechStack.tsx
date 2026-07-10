@@ -14,19 +14,37 @@ import {
   SiPostgresql,
   SiMongodb,
   SiTailwindcss,
-  SiFramer,
   SiSocketdotio,
   SiDocker,
   SiKubernetes,
   SiGit,
   SiGithub,
+  SiPandas,
+  SiTensorflow,
+  SiPytorch,
+  SiScikitlearn,
+  SiNumpy,
+  SiJupyter,
 } from "@icons-pack/react-simple-icons";
-import { Coffee } from "lucide-react"; // Ikon alternatif untuk Java
+import { Coffee, BrainCircuit, LineChart, BarChart2 } from "lucide-react"; // Ikon alternatif
 
 export function TechStack() {
   // Memetakan teks stack lama ke dalam objek berserta ikon
   // Catatan: SimpleIcons tidak memiliki logo Java akibat masalah trademark Oracle, jadi kita pakai lucide-react.
   const techItems = [
+    { name: "Docker", icon: SiDocker },
+    { name: "Kubernetes", icon: SiKubernetes },
+    { name: "Git", icon: SiGit },
+    { name: "GitHub", icon: SiGithub },
+    { name: "Pandas", icon: SiPandas },
+    { name: "TensorFlow", icon: SiTensorflow },
+    { name: "PyTorch", icon: SiPytorch },
+    { name: "Scikit-Learn", icon: SiScikitlearn },
+    { name: "NumPy", icon: SiNumpy },
+    { name: "Jupyter", icon: SiJupyter },
+    { name: "Keras", icon: BrainCircuit },
+    { name: "Matplotlib", icon: LineChart },
+    { name: "Seaborn", icon: BarChart2 },
     { name: "React", icon: SiReact },
     { name: "Next.js", icon: SiNextdotjs },
     { name: "TypeScript", icon: SiTypescript },
@@ -40,12 +58,7 @@ export function TechStack() {
     { name: "PostgreSQL", icon: SiPostgresql },
     { name: "MongoDB", icon: SiMongodb },
     { name: "Tailwind CSS", icon: SiTailwindcss },
-    { name: "Framer Motion", icon: SiFramer },
     { name: "Socket.io", icon: SiSocketdotio },
-    { name: "Docker", icon: SiDocker },
-    { name: "Kubernetes", icon: SiKubernetes },
-    { name: "Git", icon: SiGit },
-    { name: "GitHub", icon: SiGithub },
   ];
 
   // Memasukkan style badge aslimu menjadi node React untuk animasi

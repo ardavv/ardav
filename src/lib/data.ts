@@ -102,25 +102,18 @@ export async function getBlogBySlug(slug: string): Promise<Blog | null> {
 export async function getExperience(): Promise<Experience[]> {
   return [
     {
-      role: "IT Quality Assurance Intern",
-      company: "Multifinance Company",
-      date_range: "October 2025 - Present",
-      description:
-        "Mengeksekusi pengujian perangkat lunak dan memastikan keandalan sistem aplikasi secara menyeluruh.",
-    },
-    {
       role: "Co-founder & Lead Developer",
       company: "GokilTech",
-      date_range: "August 2025 - Present",
+      date_range: "August 2023 - Present",
       description:
-        "Memimpin pengembangan perangkat lunak dan mengelola deployment produksi untuk berbagai proyek web menggunakan Next.js, Node.js, dan Express.js.",
+        "Memimpin pengembangan perangkat lunak dan mengelola deployment produksi untuk berbagai proyek dan lomba.",
     },
     {
       role: "PSTE Directorate Intern",
       company: "Ministry of Communication and Digital (Komdigi)",
-      date_range: "July 2024 - Early 2026",
+      date_range: "August 2025 - January 2026",
       description:
-        "Membantu operasional digital pemerintahan dan penyusunan laporan akhir.",
+        "Merancang dan mengembangkan website Manajemen Tugas (Mantu) untuk memudahkan manajemen tugas tiap divisi di direktorat PSTE",
     },
     {
       role: "Quality Assurance Tester Intern",

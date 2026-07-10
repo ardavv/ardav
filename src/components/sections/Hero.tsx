@@ -76,7 +76,7 @@ export function Hero() {
             <span>Hi, I&apos;m Arya 👋</span>
           </div>
 
-          <div className="text-lg text-muted-foreground">
+          <div className="text-lg text-foreground">
             <span className="font-semibold text-foreground">Arya Davi S.</span>{" "}
             — AI Engineer
           </div>
@@ -86,7 +86,7 @@ export function Hero() {
           </h1>
         </div>
 
-        <p className="max-w-xl text-lg text-foreground leading-relaxed">
+        <p className="max-w-xl text-lg font-medium text-foreground leading-relaxed">
           I build functional and delightful software. I obsess over the details
           that make software feel right. Currently based in Indonesia, shipping
           pixels worldwide.
