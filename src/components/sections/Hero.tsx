@@ -82,14 +82,23 @@ export function Hero() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground">
-            I craft digital products that people actually enjoy using.
+            I make machines learn and software ship.
           </h1>
         </div>
 
         <p className="max-w-xl text-lg font-medium text-foreground leading-relaxed">
-          I build functional and delightful software. I obsess over the details
-          that make software feel right. Currently based in Indonesia, shipping
-          pixels worldwide.
+          CS student from Indonesia into ML, data pipelines, and building
+          software that actually work. Sometimes all three at once. When
+          I&apos;m not coding, I enjoy watching{" "}
+          <Link
+            href="https://youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi&si=A74RPgaUV89pG-V_"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-4 hover:text-foreground transition-colors font-medium"
+          >
+            3Blue1Brown&apos;s
+          </Link>{" "}
+          neural network series before bed and playing pool as a hobby.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 pt-2">

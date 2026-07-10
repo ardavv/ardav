@@ -66,10 +66,8 @@ export default async function AboutPage() {
 
           <div className="prose prose-zinc dark:prose-invert max-w-none pt-4">
             <p className="text-lg text-muted-foreground leading-relaxed">
-              I&apos;m a software engineer passionate about building digital
-              products that solve real-world problems. With a background in
-              Computer Science and over 2 years of experience, I specialize in
-              the React ecosystem and modern web technologies.
+              CS student from Indonesia into ML, data pipelines, and building
+              software that actually work. Sometimes all three at once.
             </p>
             <p className="text-lg text-muted-foreground leading-relaxed">
               When I&apos;m not coding, I enjoy watching{" "}
