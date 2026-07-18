@@ -7,6 +7,7 @@ export interface Project {
   date: string;
   slug: string;
   tech_stack?: string[] | null;
+  metrics?: string[] | null;
   link?: string | null;
   content?: string; // Tambahkan properti opsional ini
 }
@@ -39,6 +40,7 @@ export async function getProjects(): Promise<Project[]> {
       date: p.date,
       slug: p.slug,
       tech_stack: p.techStack || null,
+      metrics: p.metrics || null,
       link: p.link || null,
     }));
   } catch (error) {
@@ -59,6 +61,7 @@ export async function getProjectBySlug(slug: string): Promise<Project | null> {
     date: post.metadata.date,
     slug: post.metadata.slug,
     tech_stack: post.metadata.techStack || null,
+    metrics: post.metadata.metrics || null,
     link: post.metadata.link || null,
     content: post.content, // Jalur konten diperbaiki di sini
   };

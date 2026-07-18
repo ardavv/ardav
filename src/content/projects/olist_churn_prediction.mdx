@@ -3,6 +3,10 @@ title: "Big Data Pipeline for Churn Prediction"
 summary: "Membangun distributed pipeline berbasis PySpark (Medallion Architecture) untuk membedah silent attrition dan limitasi model prediktif pada marketplace non-kontraktual."
 image: "/images/olist-thumbnail.png"
 date: "2026-06-25"
+metrics:
+  - "🏆 Improved ROC-AUC by 15% using Random Under-Sampling"
+  - "💾 Processed 100k+ imbalanced ecommerce transactions"
+  - "🔍 Global & Local Explainability via SHAP Values"
 techStack:
   [
     "PySpark",
@@ -16,6 +20,8 @@ techStack:
   ]
 link: "https://github.com/ardavv/Customer-Churn-Predicition-Brazilian-Ecommerce-Olist"
 ---
+
+<ModelDemo url="https://ardavv-churn-prediction-olist.hf.space" height="750px" />
 
 ## Overview
 
@@ -51,16 +57,23 @@ Lapisan ini menjadi tempat pemrosesan berat dieksekusi secara paralel:
 
 - **Cleansing & Standardisasi:** Penanganan _encoding error_ nama kota pada tabel geolocations menggunakan ekspresi reguler (Regex) untuk menghilangkan karakter beraksen bahasa Portugis dan mengubah teks menjadi lowercase. Outlier ekstrem pada fitur `price` dan `freight_value` yang bersifat _right-skewed_ ditangani dengan metode _capping_ berbasis Interquartile Range (IQR). Missing values diimputasi menggunakan nilai median.
 - **Formulasi Churn Empiris:** Mengingat pelanggan bebas pergi kapan saja, status churn harus didefinisikan secara ilmiah. Saya menganalisis distribusi jarak antar-pembelian (_Inter-Purchase Interval_) dari kelompok pelanggan yang bertransaksi lebih dari satu kali (_repeat buyers_). Berdasarkan analisis visual histogram dan kurva CDF, diperoleh data bahwa persentil ke-80 (P80) berada di angka 165 hari. Dengan dasar data empiris tersebut, saya menetapkan batas **180 hari** sebagai zona penyangga konservatif untuk _churn threshold_. Jika pelanggan tidak bertransaksi dalam waktu 180 hari sejak pesanan terakhir sebelum tanggal cut-off (1 Maret 2018), mereka diberi label Churn (1). Jika kembali berbelanja di jendela prediksi, mereka diberi label Active (0).
-<Grid>
-  <div>
-    <Image src="/images/ipi-histogram-olist.png" alt="Inter-Purchase Interval Histogram" />
-    <p align="center" className="mt-2 text-sm text-muted-foreground"><b>Inter-Purchase Interval Histogram</b></p>
-  </div>
-  <div>
-    <Image src="/images/ipi-cdf-olist.png" alt="CDF Curve" />
-    <p align="center" className="mt-2 text-sm text-muted-foreground"><b>Kurva CDF</b></p>
-  </div>
-</Grid>
+  <Grid>
+    <div>
+      <Image
+        src="/images/ipi-histogram-olist.png"
+        alt="Inter-Purchase Interval Histogram"
+      />
+      <p align="center" className="mt-2 text-sm text-muted-foreground">
+        <b>Inter-Purchase Interval Histogram</b>
+      </p>
+    </div>
+    <div>
+      <Image src="/images/ipi-cdf-olist.png" alt="CDF Curve" />
+      <p align="center" className="mt-2 text-sm text-muted-foreground">
+        <b>Kurva CDF</b>
+      </p>
+    </div>
+  </Grid>
 
 ### 3. Gold Layer (Customer Feature Mart)
 

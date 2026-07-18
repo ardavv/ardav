@@ -34,7 +34,17 @@ export function ProjectCard({ project }: { project: Project }) {
             </a>
           )}
         </div>
-        <p className="text-muted-foreground mb-6 line-clamp-3">{project.summary}</p>
+        <p className="text-muted-foreground mb-4 line-clamp-2 text-sm">{project.summary}</p>
+
+        {project.metrics && project.metrics.length > 0 && (
+          <div className="flex flex-col gap-1.5 mb-6">
+            {project.metrics.map((metric, idx) => (
+              <div key={idx} className="flex items-start gap-2 text-xs font-medium text-foreground bg-primary/10 border border-primary/20 px-2.5 py-1.5 rounded-md">
+                <span className="leading-tight">{metric}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       
       <div className="flex flex-wrap gap-2 mt-auto">

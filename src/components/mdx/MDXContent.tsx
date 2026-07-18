@@ -75,6 +75,33 @@ const components = {
       {children}
     </div>
   ),
+  ModelDemo: ({ url, height = "600px" }: { url: string; height?: string }) => (
+    <div className="my-8 flex flex-col gap-3 rounded-xl border border-border/50 bg-card p-2 md:p-4 shadow-sm">
+      <div className="flex items-center gap-2 px-2 pb-2">
+        <div className="flex gap-1.5">
+          <div className="h-3 w-3 rounded-full bg-red-500/80"></div>
+          <div className="h-3 w-3 rounded-full bg-yellow-500/80"></div>
+          <div className="h-3 w-3 rounded-full bg-green-500/80"></div>
+        </div>
+        <span className="text-xs font-medium text-muted-foreground ml-2 flex items-center gap-1.5">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+          </span>
+          Live Interactive Demo
+        </span>
+      </div>
+      <div className="relative w-full overflow-hidden rounded-lg bg-background border border-border/30">
+        <iframe
+          src={url}
+          style={{ height, width: "100%", border: "none" }}
+          title="AI Model Demo"
+          allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+          sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-downloads"
+        />
+      </div>
+    </div>
+  ),
   pre: CustomPre,
   a: CustomLink,
   h1: ({ children }: any) => (
