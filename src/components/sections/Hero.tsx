@@ -103,17 +103,19 @@ export function Hero() {
 
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <Link
-            href="/contact"
-            className="inline-flex w-full sm:w-auto h-10 items-center justify-center rounded-full bg-foreground px-6 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
-          >
-            Let&apos;s talk
-          </Link>
-          <Link
             href="/projects"
-            className="inline-flex w-full sm:w-auto h-10 items-center justify-center rounded-full border border-border bg-background px-6 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="inline-flex w-full sm:w-auto h-10 items-center justify-center rounded-full bg-foreground px-6 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
           >
             View Projects
           </Link>
+          <a
+            href="/cv.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex w-full sm:w-auto h-10 items-center justify-center rounded-full border border-border bg-background px-6 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            View CV
+          </a>
         </div>
 
         <div className="flex gap-5 pt-8 text-muted-foreground">

@@ -1,14 +1,12 @@
 ---
-title: "Big Data Pipeline for Churn Prediction on Brazilian E-Commerce Olist Dataset"
-summary: "End-to-end Big Data pipeline menggunakan arsitektur Medallion dan evaluasi Machine Learning untuk memprediksi customer churn pada dataset Olist."
+title: "Big Data Pipeline for Churn Prediction"
+summary: "Membangun distributed pipeline berbasis PySpark (Medallion Architecture) untuk membedah silent attrition dan limitasi model prediktif pada marketplace non-kontraktual."
 image: "/images/olist-thumbnail.png"
 date: "2026-06-25"
 techStack:
   [
     "PySpark",
     "Medallion Architecture",
-    "Scikit-learn",
-    "Pandas",
     "Random Under Sampling",
     "Logistic Regression",
     "Random Forest",
@@ -21,65 +19,93 @@ link: "https://github.com/ardavv/Customer-Churn-Predicition-Brazilian-Ecommerce-
 
 ## Overview
 
-Proyek ini merupakan pengembangan sistem analisis Big Data untuk memprediksi _customer churn_ menggunakan dataset publik: [Olist Brazilian E-Commerce](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce/).
-Dikembangkan sebagai proyek kelompok, tujuan utamanya adalah membangun _pipeline_ data yang skalabel dan menemukan model prediksi churn paling optimal dari data transaksional yang masif dan sangat tidak seimbang atau imbalanced ~(99%:1%).
+Proyek ini mengeksplorasi tantangan besar dalam memprediksi _customer churn_ pada platform e-commerce _non-contractual_ menggunakan dataset Olist Brazilian E-Commerce. Berbeda dengan bisnis berbasis langganan (_contractual_), platform marketplace tidak memiliki indikator loyalitas eksplisit seperti masa keanggotaan (_tenure_) atau riwayat pemutusan layanan. Pelanggan berhenti belanja tanpa melakukan pembatalan formal, sebuah fenomena yang dikenal sebagai _silent attrition_.
+
+Tujuan utama proyek kelompok ini adalah membangun distributed data pipeline yang scalable menggunakan PySpark sekaligus menguji secara empiris sejauh mana fitur transaksional statis mampu memprediksi perilaku churn yang ekstrem pada ekosistem marketplace raksasa.
 
 ## My Role
 
-Proyek ini dikerjakan dalam kelompok Big Data. Cakupan kerja saya dalam pengembangan ini meliputi:
+Sebagai pengembang utama dalam proyek tim ini, saya memegang tanggung jawab pada arsitektur end-to-end:
 
-- Merancang arsitektur Big Data menggunakan **Medallion Architecture** (Bronze, Silver, Gold).
-- Memilih _tech stack_ (fokus pada PySpark untuk pemrosesan skala besar).
-- Mengeksekusi _pipeline_ mulai dari _data ingestion_ di Bronze Layer.
-- Melakukan EDA, _feature engineering_, dan penentuan label churn secara empiris menggunakan Inter-Purchase Interval di Silver Layer.
-- Membangun _Data Mart_ pada lapisan Gold yang siap pakai.
-- Melatih model Machine Learning, mengevaluasi performa, dan merancang interpretasi model menggunakan SHAP.
+- Merancang dan mengeksekusi Big Data pipeline menggunakan **Medallion Architecture** (Bronze, Silver, Gold Layer) berbasis PySpark DataFrame.
+- Merumuskan label churn secara objektif dengan menganalisis _Inter-Purchase Interval_ dan _Cumulative Distribution Function (CDF)_, menggantikan penentuan threshold arbitrer.
+- Menyusun _Customer Feature Mart_ pada Gold Layer dengan pembersihan data tingkat lanjut (standardisasi teks regex dan capping outlier IQR).
+- Mengimplementasikan pipeline machine learning terisolasi menggunakan library `imblearn` untuk mengatasi _extreme class imbalance_ tanpa memicu _data leakage_.
+- Melakukan evaluasi model menggunakan K-Fold Cross Validation dan membedah kausalitas keputusan model via interpretasi SHAP (SHapley Additive exPlanations).
 
-## Big Data Pipeline & Architecture
+## Engineering the Distributed Pipeline
 
-Pipeline ini dirancang untuk memproses jutaan baris data e-commerce secara efisien melalui tiga lapisan utama:
+Data mentah Olist terdiri dari banyak tabel relasional yang saling terhubung. Untuk memproses data transaksional berskala besar ini secara efisien, saya merancang arsitektur pipeline terdistribusi yang dibagi menjadi tiga lapisan logis:
 
 ![Arsitektur Pipeline](/images/pipeline-architecture-olist.png)
 
 ### 1. Bronze Layer (Raw Ingestion)
 
-Tahap awal yang berfokus pada _ingestion_ data mentah dari berbagai tabel relasional (Orders, Items, Payments, Customers, dll) Olist tanpa transformasi struktural.
+Fase pemuatan awal data mentah (_raw data_) dari file CSV langsung ke dalam lingkungan distributed computing PySpark. Saya mendefinisikan eksklisit skema (_explicit schema_) menggunakan `StructType` dan `StructField` pada tiap tabel (Orders, Items, Payments, Customers, Products, Reviews). Langkah ini wajib dilakukan untuk memaksa konsistensi tipe data di seluruh node cluster dan mencegah kesalahan inferensi otomatis oleh Spark.
 
 ![ERD Olist Database](/images/erd-olist.png)
 
-### 2. Silver Layer (Processing, EDA, & Labeling)
+### 2. Silver Layer (Cleanse, Transform & Labeling)
 
-Mayoritas pemrosesan kompleks terjadi pada lapisan ini:
+Lapisan ini menjadi tempat pemrosesan berat dieksekusi secara paralel:
 
-- **Pembersihan & EDA:** Penanganan nilai yang hilang, standardisasi format, dan _Exploratory Data Analysis_.
-- **Churn Labeling:** Penentuan status churn tidak ditebak secara acak. Saya menerapkan _window/cut-off date_ berdasarkan metrik **Recency**.
-- **Thresholding:** Penggunaan _Inter-Purchase Interval_ dan _Cumulative Distribution Function (CDF)_ untuk menemukan batasan hari inaktivitas yang paling masuk akal secara bisnis sebelum mengklasifikasikan seorang pelanggan sebagai "churn".
+- **Cleansing & Standardisasi:** Penanganan _encoding error_ nama kota pada tabel geolocations menggunakan ekspresi reguler (Regex) untuk menghilangkan karakter beraksen bahasa Portugis dan mengubah teks menjadi lowercase. Outlier ekstrem pada fitur `price` dan `freight_value` yang bersifat _right-skewed_ ditangani dengan metode _capping_ berbasis Interquartile Range (IQR). Missing values diimputasi menggunakan nilai median.
+- **Formulasi Churn Empiris:** Mengingat pelanggan bebas pergi kapan saja, status churn harus didefinisikan secara ilmiah. Saya menganalisis distribusi jarak antar-pembelian (_Inter-Purchase Interval_) dari kelompok pelanggan yang bertransaksi lebih dari satu kali (_repeat buyers_). Berdasarkan analisis visual histogram dan kurva CDF, diperoleh data bahwa persentil ke-80 (P80) berada di angka 165 hari. Dengan dasar data empiris tersebut, saya menetapkan batas **180 hari** sebagai zona penyangga konservatif untuk _churn threshold_. Jika pelanggan tidak bertransaksi dalam waktu 180 hari sejak pesanan terakhir sebelum tanggal cut-off (1 Maret 2018), mereka diberi label Churn (1). Jika kembali berbelanja di jendela prediksi, mereka diberi label Active (0).
+<Grid>
+  <div>
+    <Image src="/images/ipi-histogram-olist.png" alt="Inter-Purchase Interval Histogram" />
+    <p align="center" className="mt-2 text-sm text-muted-foreground"><b>Inter-Purchase Interval Histogram</b></p>
+  </div>
+  <div>
+    <Image src="/images/ipi-cdf-olist.png" alt="CDF Curve" />
+    <p align="center" className="mt-2 text-sm text-muted-foreground"><b>Kurva CDF</b></p>
+  </div>
+</Grid>
 
 ### 3. Gold Layer (Customer Feature Mart)
 
-Data yang sudah diproses di Silver Layer kemudian diagregasi dan di-_join_ pada level pelanggan (berbasis `customer_unique_id`) untuk membangun **Data Mart**. Lapisan Gold ini berfungsi sebagai sumber _tabular features_ final yang bersih dan siap diumpankan ke algoritma Machine Learning.
+Data transaksional level Silver yang tersebar kemudian diagregasikan secara granular ke level pelanggan unik berbasis `customer_unique_id`. Di tahap ini, fitur-fitur perilaku dibentuk, seperti `frequency`, `monetary`, `freight_ratio`, `purchased_delivered` (durasi pengiriman), dan `review_score`. Variabel _recency_ sengaja dikeluarkan secara ketat dari matriks fitur final. Ini merupakan langkah krusial untuk menghindari _target leakage_, karena _recency_ merupakan komponen utama yang membangun label target churn itu sendiri.
 
-## Machine Learning & Explainable AI
+## Simple Beats Complex (Modelling)
 
-Data transaksi e-commerce memiliki distribusi kelas target yang sangat timpang (tingkat churn sangat tinggi/rendah dibanding kelas sebaliknya). Pemodelan harus menangani kondisi ini.
+Eksplorasi data deskriptif menunjukkan karakteristik alami platform Olist yang sangat brutal: **97,02% pelanggan adalah one-time buyer**. Akibatnya, dataset akhir mengalami ketidakseimbangan kelas yang ekstrem (_extreme class imbalance_) dengan proporsi kelas target sebesar **98,84% Churn** dan hanya **1,16% Active**.
 
-### Penanganan Imbalanced Data
+Untuk mengatasinya, saya mengintegrasikan teknik **Random Under-Sampling (RUS)** langsung di dalam pipeline pelatihan. Proses sampling ini diisolasi secara ketat di dalam lipatan cross-validation agar data uji tetap mencerminkan rasio populasi asli, menjaga validitas evaluasi.
 
-Saya menerapkan teknik **Random Under Sampling (RUS)** pada _training set_ untuk menyeimbangkan rasio kelas churn dan non-churn sehingga model tidak menghasilkan prediksi bias yang hanya berpihak pada kelas mayoritas.
+Pengujian performa model dilakukan melalui metode **5-Fold Stratified Cross-Validation** dengan hasil evaluasi global sebagai berikut:
 
-### Modeling & Evaluasi
+| Model                   | Accuracy | Precision Macro | Recall Macro | F1-Score Macro | ROC-AUC  |
+| :---------------------- | :------- | :-------------- | :----------- | :------------- | :------- |
+| **Logistic Regression** | **0.57** | **0.50**        | **0.56**     | **0.37**       | **0.60** |
+| Random Forest           | 0.56     | 0.50            | 0.54         | 0.37           | 0.57     |
+| XGBoost                 | 0.54     | 0.50            | 0.52         | 0.36           | 0.56     |
 
-Evaluasi model memanfaatkan metrik F1-Score dan ROC-AUC melalui metode **K-Fold Cross Validation** agar performa lebih terukur dan tidak _overfitting_. Beberapa algoritma yang saya uji:
+### Analisis Kegagalan Model Ensemble
 
-- **Logistic Regression:** Digunakan sebagai _baseline_ model linier.
-- **Random Forest:** _Ensemble trees_ untuk menangkap pola non-linier dalam perilaku pembelian.
-- **XGBoost:** Algoritma _gradient boosting_ yang keluar sebagai performa prediktif tertinggi.
+Hasil di atas menyajikan paradoks yang menarik: algoritma _ensemble learning_ kompleks seperti XGBoost dan Random Forest justru mencatatkan performa yang lebih rendah dibanding model linier sederhana.
 
-### Explainable AI (SHAP)
+Kondisi ini terjadi karena intervensi teknik RUS memangkas kelas mayoritas (churn) secara masif agar seimbang dengan kelas minoritas yang hanya berjumlah ratusan sampel. Penyusutan ruang data yang drastis ini memaksa algoritma berbasis pohon (tree-based) yang kompleks untuk mencari batas keputusan pada data yang sangat terbatas, memicu terjadinya _overfitting_ parah. Sebaliknya, **Logistic Regression** yang bertumpu pada tarikan batas keputusan (_decision boundary_) linier yang kaku memiliki keunggulan inheren berupa _low-variance_. Karakteristik model linier ini membuatnya jauh lebih tangguh dan memberikan performa generalisasi yang lebih baik pada ruang data yang menyusut dan penuh noise.
 
-Akurasi metrik saja tidak menjelaskan mekanisme keputusan model. Kami mengimplementasikan **SHAP (SHapley Additive exPlanations)** pada model XGBoost untuk membedah _feature importance_. Melalui teknik ini, kita bisa melihat dampak variabel spesifik secara detail, misalnya seberapa besar pengaruh _geolocation_, _status pesanan disetujui_, _freight ratio_, sampai skor _review_ terhadap keputusan pelanggan untuk churn.
+## Explainable AI (SHAP Deep Dive)
+
+Akurasi global yang rendah menuntut analisis transparansi model untuk memahami bagaimana variabel memengaruhi prediksi. Saya menerapkan pendekatan SHAP menggunakan `LinearExplainer` pada model terbaik (Logistic Regression) untuk membedah _Global Feature Importance_ dan arah kausalitas fitur.
+
+![SHAP Global Feature Importance](/images/shap-global-importance-olist.png)
+
+Analisis dampak absolut menunjukkan bahwa durasi dari pemesanan hingga disetujui (`purchased_approved`), skor ulasan pelanggan (`review_score`), dan wilayah tempat tinggal pelanggan (`customer_state_northeastern`) menjadi tiga variabel paling dominan yang memandu arah prediksi model.
+
+Ketika dibedah menggunakan _Beeswarm Summary Plot_, mekanisme keputusan linier model terlihat sangat jelas:
 
 ![SHAP Summary Plot](/images/shap-summary-olist.png)
+
+- **purchased_approved:** Sebagai fitur paling berpengaruh, pemisahan warnanya terbagi secara konsisten. Nilai fitur yang tinggi (warna merah, merepresentasikan proses approval transaksi yang lambat) berkorelasi positif dengan SHAP value. Hal ini membuktikan secara empiris bahwa bottleneck pada fase pemrosesan awal transaksi secara linear meningkatkan probabilitas model untuk memprediksi Churn (1).
+- **avg_items_per_order & frequency:** Karakteristik visual kedua fitur ini sangat unik karena memiliki ekor pencilan (_outlier_) berwarna merah cerah yang ditarik jauh ke area negatif (SHAP value mendekati -3). Pola ini mengindikasikan efek penekan churn yang sangat agresif. Pelanggan yang membeli komoditas dalam volume besar dalam sekali transaksi, atau pelanggan yang memiliki frekuensi belanja tinggi, memiliki resistensi instan yang sangat kuat terhadap risiko churn.
+
+## Strategic Engineering & Business Takeaway
+
+Rendahnya nilai metrik evaluasi global secara menyeluruh (ROC-AUC tertahan di angka 0.60) memberikan kesimpulan ilmiah yang sangat berharga. **Fitur transaksional statis (histori pembelian masa lalu) pada platform non-kontraktual memiliki kekuatan prediktif (_predictive power_) yang lemah untuk mengidentifikasi customer churn melalui pendekatan klasifikasi biner.** Perilaku belanja pelanggan marketplace terlalu dinamis untuk didekati menggunakan label biner "ya atau tidak" dalam rentang waktu statis.
+
+Sebagai rekomendasi arsitektur dan bisnis, paradigma analitik Olist harus diubah secara total. Pengelolaan data ke depan harus dialihkan dari klasifikasi biner biasa menuju permodelan probabilistik waktu-ke-peristiwa (_time-to-event modeling_) menggunakan pendekatan **Survival Analysis** atau model **Buy-Till-You-Die (BTYD)** seperti BG/NBD untuk mencari kelompok pelanggan minoritas yang memiliki _Propensity to Repeat Purchase_.
 
 Pembahasan lebih detail mengenai proyek ini bisa dicek di sini:  
 [Paper Penerapan Big Data pada Olist Brazilian E-Commerce](https://docs.google.com/document/d/1H4wNVxN91wBQx80kN66JRMvQA-lmJXMc/edit?usp=sharing&ouid=115196504931297309402&rtpof=true&sd=true)

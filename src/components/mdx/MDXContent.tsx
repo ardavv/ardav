@@ -1,24 +1,25 @@
 import { MDXRemote } from "next-mdx-remote/rsc";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import Zoom from 'react-medium-image-zoom';
+import 'react-medium-image-zoom/dist/styles.css';
+import remarkGfm from 'remark-gfm';
 
-// Custom Image Component with Capacitor
-function CustomImage({ src, alt, title }: any) {
+// Custom Image Component
+function CustomImage({ src, alt, title, ...props }: any) {
   return (
-    // REVISI 1: Ubah <figure> menjadi <span>, tambahkan utility 'block'
-    <span className="my-8 block">
-      {/* REVISI 2: Ubah div menjadi span, tambahkan utility 'block' */}
-      <span className="relative block w-full aspect-video overflow-hidden rounded-xl border border-border/50 bg-muted/20">
-        <Image
+    <span className="my-6 flex flex-col items-center w-full">
+      <Zoom>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src={src}
           alt={alt || "Project Image"}
-          // Pastikan prop layout/fill di sini sesuai dengan kebutuhanmu sebelumnya
-          fill
-          className="object-cover"
+          className="w-full h-auto max-h-[80vh] object-contain rounded-xl border border-border/50 bg-muted/20 mx-auto"
+          loading="lazy"
+          {...props}
         />
-      </span>
+      </Zoom>
 
-      {/* Jika kamu punya caption/title, gunakan span juga alih-alih figcaption */}
       {title && (
         <span className="mt-2 block text-center text-sm text-muted-foreground">
           {title}
@@ -68,6 +69,12 @@ function CustomLink(props: any) {
 
 const components = {
   img: CustomImage,
+  Image: CustomImage,
+  Grid: ({ children, className }: any) => (
+    <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 items-center w-full", className)}>
+      {children}
+    </div>
+  ),
   pre: CustomPre,
   a: CustomLink,
   h1: ({ children }: any) => (
@@ -86,9 +93,9 @@ const components = {
     </h3>
   ),
   p: ({ children }: any) => (
-    <p className="leading-7 [&:not(:first-child)]:mt-4 text-muted-foreground">
+    <div className="leading-7 [&:not(:first-child)]:mt-4 text-muted-foreground">
       {children}
-    </p>
+    </div>
   ),
   ul: ({ children }: any) => (
     <ul className="my-6 ml-6 list-disc [&>li]:mt-2 text-muted-foreground">
@@ -109,12 +116,50 @@ const components = {
       {children}
     </blockquote>
   ),
+  table: ({ children }: any) => (
+    <div className="my-6 w-full overflow-x-auto rounded-lg border border-border/50">
+      <table className="w-full text-sm text-left">{children}</table>
+    </div>
+  ),
+  thead: ({ children }: any) => (
+    <thead className="bg-muted/50 text-foreground font-semibold">
+      {children}
+    </thead>
+  ),
+  tbody: ({ children }: any) => (
+    <tbody className="divide-y divide-border/50">
+      {children}
+    </tbody>
+  ),
+  tr: ({ children }: any) => (
+    <tr className="hover:bg-muted/20 transition-colors">
+      {children}
+    </tr>
+  ),
+  th: ({ children }: any) => (
+    <th className="px-4 py-3 border-b border-border/50 whitespace-nowrap">
+      {children}
+    </th>
+  ),
+  td: ({ children }: any) => (
+    <td className="px-4 py-3 text-muted-foreground">
+      {children}
+    </td>
+  ),
 };
 
 export function MDXContent({ source }: { source: string }) {
   return (
     <div className="max-w-none">
-      <MDXRemote source={source} components={components} />
+      <MDXRemote 
+        source={source} 
+        components={components} 
+        options={{
+          mdxOptions: {
+            remarkPlugins: [remarkGfm],
+          }
+        }}
+      />
     </div>
   );
 }
