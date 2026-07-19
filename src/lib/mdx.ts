@@ -17,6 +17,7 @@ export type PostMetadata = {
   slug: string;
   readingTime?: string;
   techStack?: string[]; // For specific projects
+  metrics?: string[]; // For impact metrics
   link?: string; // For project demo link
 };
 
