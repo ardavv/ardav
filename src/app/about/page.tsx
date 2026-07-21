@@ -59,7 +59,7 @@ export default async function AboutPage() {
                 Arya Davi S.
               </h1>
               <p className="text-xl text-muted-foreground font-medium">
-                Software Engineer
+                AI Engineer
               </p>
             </div>
           </div>

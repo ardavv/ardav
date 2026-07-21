@@ -18,7 +18,9 @@ export type PostMetadata = {
   readingTime?: string;
   techStack?: string[]; // For specific projects
   metrics?: string[]; // For impact metrics
-  link?: string; // For project demo link
+  link?: string; // For GitHub source code
+  dataset?: string; // For Kaggle/dataset links
+  demo?: string; // For external live demo links
 };
 
 export function getPostBySlug(slug: string, type: "blog" | "projects"): Post | null {

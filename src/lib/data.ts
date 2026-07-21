@@ -9,6 +9,8 @@ export interface Project {
   tech_stack?: string[] | null;
   metrics?: string[] | null;
   link?: string | null;
+  dataset?: string | null;
+  demo?: string | null;
   content?: string; // Tambahkan properti opsional ini
 }
 
@@ -42,6 +44,8 @@ export async function getProjects(): Promise<Project[]> {
       tech_stack: p.techStack || null,
       metrics: p.metrics || null,
       link: p.link || null,
+      dataset: p.dataset || null,
+      demo: p.demo || null,
     }));
   } catch (error) {
     console.error("Error loading local projects:", error);
@@ -63,6 +67,8 @@ export async function getProjectBySlug(slug: string): Promise<Project | null> {
     tech_stack: post.metadata.techStack || null,
     metrics: post.metadata.metrics || null,
     link: post.metadata.link || null,
+    dataset: post.metadata.dataset || null,
+    demo: post.metadata.demo || null,
     content: post.content, // Jalur konten diperbaiki di sini
   };
 }

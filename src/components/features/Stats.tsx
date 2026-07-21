@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 
 const defaultStats = [
   { label: "Years Experience", value: "2+" },
-  { label: "Projects Completed", value: "20+" },
-  { label: "Happy Clients", value: "5+" },
+  { label: "Projects Completed", value: "30+" },
+  { label: "Models Built", value: "15+" },
 ];
 
 interface StatsProps {

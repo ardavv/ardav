@@ -1,0 +1,151 @@
+---
+title: "Investigating Shortcut Learning in ASL Classification with Grad-CAM"
+summary: "Membedah fenomena Clever Hans Effect pada model CNN kustom, mengevaluasi limitasi arsitektur MLP, dan menganalisis kerapuhan model terhadap Data Distribution Shift di lingkungan inferensi dunia nyata."
+image: "/images/asl/asl-thumbnail.jpg"
+date: "2026-07-20"
+metrics:
+  - "🏆 100% accuracy on the held-out internal test set with an ultralight 135k parameter CNN"
+  - "🔍 Exposed and mitigated dataset-specific background bias using targeted spatial augmentation"
+  - "⚠️ Diagnosed critical model fragility and Data Distribution Shift in real-world inference using XAI"
+techStack:
+  [
+    "TensorFlow",
+    "Keras",
+    "OpenCV",
+    "Grad-CAM",
+    "tf.data API",
+    "Scikit-Learn",
+    "Matplotlib",
+    "Seaborn",
+  ]
+dataset: "https://www.kaggle.com/datasets/grassknoted/asl-alphabet"
+demo: "https://huggingface.co/spaces/ardavv/ASL-Classification-XAI"
+link: "https://github.com/ardavv/ASL-Classification-XAI"
+---
+
+<ModelDemo
+  height="750px"
+  url="https://ardavv-ASL-Classification-XAI.hf.space"
+/>
+
+<Image
+  alt="ASL Project Hero Banner"
+  className="w-full rounded-lg mb-8"
+  src="/images/asl/asl-thumbnail.jpg"
+/>
+
+## Overview
+
+Proyek ini bertujuan untuk membangun sistem klasifikasi citra American Sign Language (ASL) yang efisien sekaligus melakukan audit kritis terhadap validitas keputusan model (_Explainable AI_). Menggunakan dataset ASL Alphabet Kaggle (29 kelas seimbang), tantangan utama berasal dari karakteristik dataset yang menggunakan latar belakang sangat seragam.
+
+Sebagian besar gambar dalam dataset ini diambil dengan bingkai latar belakang biru yang statis. Akurasi tinggi dalam skenario ini rawan memicu _Clever Hans Effect_, di mana model mendapatkan nilai sempurna murni karena menghafal _noise_ latar belakang. Proyek ini membandingkan arsitektur MLP dan CNN, menerapkan mitigasi bias data, dan sekaligus mengevaluasi keterbatasan arsitektur berkapasitas rendah ketika diuji pada data dunia nyata (_Out-of-Distribution_).
+
+## My Role
+
+Sebagai pengembang utama, fokus eksekusi saya mencakup seluruh siklus MLOps dari rekayasa data hingga diagnostik model:
+
+- Membangun pipeline data berbasis `tf.data` API dengan pemrosesan asinkron untuk memuat dataset puluhan gigabyte pada memori terbatas (Google Colab T4) tanpa mengalami _Out of Memory_ (OOM).
+- Melakukan _ablation study_ pada enam variasi arsitektur MLP untuk menguji keterbatasan jaringan _fully-connected_ dalam menangani informasi spasial.
+- Merancang CNN ringan beresolusi 64x64 piksel, mengeliminasi lapisan `Flatten` dengan `GlobalAveragePooling2D` untuk menyusutkan komputasi menjadi ~135 ribu parameter.
+- Mendesain strategi augmentasi agresif untuk mengurangi ketergantungan model terhadap bingkai biru bawaan dataset.
+- Mengimplementasikan diagnostik Grad-CAM via `tf.GradientTape` untuk memvisualisasikan area citra yang menjadi dasar prediksi model. di lingkungan pengujian internal maupun inferensi dunia nyata.
+
+## Engineering the Image Pipeline & Augmentation
+
+Untuk memotong bias latar belakang dari tingkat hulu, modifikasi dilakukan langsung pada _pipeline preprocessing_:
+
+### 1. Optimized Ingestion Pipeline
+
+Data dialirkan secara asinkron menggunakan `tf.data.Dataset`. Dengan konfigurasi `num_parallel_calls=tf.data.AUTOTUNE` dan _resizing_ dinamis menjadi 64x64 pada saat _runtime_, dataset diproses bertahap tanpa harus memuat seluruh dataset ke dalam RAM.
+
+### 2. Targeted Spatial Augmentation (Mitigasi Bias)
+
+Model _baseline_ menunjukkan ketergantungan absolut pada bingkai latar belakang. Untuk merusak konsistensi ini, saya merapkan _spatial augmentation_ dengan parameter pengisian ekstrem:
+
+```python
+data_augmentation = tf.keras.Sequential([
+    layers.RandomZoom(height_factor=(-0.1, -0.05), width_factor=(-0.1, -0.05), fill_mode="constant", fill_value=0.0),
+    layers.RandomRotation(factor=0.02, fill_mode="constant", fill_value=0.0),
+    layers.RandomTranslation(height_factor=0.05, width_factor=0.05, fill_mode="constant", fill_value=0.0),
+    layers.RandomBrightness(factor=0.15),
+    layers.RandomContrast(factor=0.1)
+])
+```
+
+<Grid>
+  <div>
+    <Image
+      alt="Original Batch Images with Blue Background"
+      src="/images/asl/before-augmentation-asl-batch.png"
+    />
+    <div align="center" className="mt-2 text-sm text-muted-foreground">
+      <b>Dataset Asli:</b> Konsistensi latar belakang biru yang memicu bias.
+    </div>
+  </div>
+  <div>
+    <Image
+      alt="Augmented Batch Images with Constant Black Padding"
+      src="/images/asl/after-augmentation-asl-batch.png"
+    />
+    <div align="center" className="mt-2 text-sm text-muted-foreground">
+      <b>Setelah Augmentasi:</b> Parameter `fill_value=0.0` memotong gambar
+      secara acak dan mengganti area luar dengan ruang hampa hitam.
+    </div>
+  </div>
+</Grid>
+
+Penggunaan `fill_mode="constant"` melatih _feature detector_ CNN untuk mengabaikan ruang kosong di sekitarnya dan memfokuskan ekstraksi kontur pada objek di tengah matriks.
+
+## Custom CNN Architecture & MLP Ablation Study
+
+Evaluasi performa membandingkan dua pendekatan arsitektur secara langsung:
+
+### 1. Batasan Baseline MLP
+
+Eksperimen lapisan MLP mengonfirmasi ketidakmampuan algoritma linier murni dalam mengekstrak hierarki spasial. Meratakan matriks 2D menjadi vektor 1D menghancurkan relasi ketetanggaan piksel. Model mengalami osilasi gradien parah, dengan akurasi pengujian maksimal terhenti di angka **57.63%**.
+
+### 2. Efisiensi Custom CNN
+
+Model utama dibangun menggunakan 3 blok konvolusi (`Conv2D` → `BatchNormalization` → `MaxPooling2D`). Penggunaan metrik ruang global sukses menekan ukuran model secara signifikan.
+
+<Image
+  alt="Accuracy and Loss Training Curve CNN"
+  className="w-full rounded-lg my-6"
+  src="/images/asl/accuracy-loss-training-curve-asl.png"
+/>
+<div align="center" className="mt-2 text-sm text-muted-foreground mb-8">
+  <b>Kurva Pelatihan CNN:</b> Stabilitas konvergensi tercapai pada Epoch ke-15
+  berkat intervensi ReduceLROnPlateau.
+</div>
+
+| Spesifikasi Arsitektur             | Keterangan / Hasil                        |
+| :--------------------------------- | :---------------------------------------- |
+| **Dimensi Input**                  | 64x64x3                                   |
+| **Total Parameter**                | 135,261 (Ultralight CNN)                  |
+| **Akurasi Uji (Dataset Internal)** | 100% (Pada skenario model ber-augmentasi) |
+
+## Explainable AI (Grad-CAM Diagnostic Deep Dive)
+
+Akurasi 100% pada _dataset_ uji adalah metrik yang menipu. Untuk membedah kecerdasan model secara objektif, Grad-CAM dilakukan ke lapisan konvolusi terakhir (`last_conv_layer`) pada tiga skenario berbeda.
+
+### Skenario 1: Model Tanpa Augmentasi (Shortcut Learning)
+
+Pada pengujian data internal, _heatmap_ Grad-CAM pada model _baseline_ membuktikan terjadinya manipulasi prediksi. Area aktivasi (titik panas) terpusat pada pinggiran dinding dan bingkai biru, membuktikan model menebak kelas berdasarkan _noise_ latar belakang, bukan struktur anatomi tangan.
+
+### Skenario 2: Model Dengan Augmentasi (Robust Internal Activation)
+
+Setelah augmentasi `fill_mode` diterapkan, orientasi atensi jaringan bergeser secara radikal. Grad-CAM secara konsisten mengunci kerangka geometris tangan (tekukan buku jari, spasi antar-jari). Metrik 100% di tahap ini terbukti valid secara representasi fitur.
+
+### Skenario 3: Uji Dunia Nyata & Kerapuhan Model (Data Distribution Shift)
+
+Keberhasilan model di dataset internal runtuh saat diuji coba pada lingkungan _deployment_ menggunakan gambar _custom_ dari kamera eksternal. Grad-CAM mengungkap kelemahan fatal arsitektur ringan ini:
+
+1. **Sensitivitas Kontras Ekstrem:** Karena model disusutkan menjadi 64x64, CNN kehilangan kemampuan membaca tekstur detail dan sepenuhnya beroperasi sebagai _edge detector_ (pendeteksi siluet).
+2. **Softmax Collapse & Noise Hijacking:** Saat diuji pada gambar dengan latar belakang yang memiliki objek tajam (misal: stopkontak di dinding), _filter_ konvolusi "dibajak" oleh kontras objek luar tersebut. Hal ini memicu _overconfidence_ palsu (hingga 99.96%) pada tebakan kelas yang sepenuhnya salah.
+3. **Inter-Class Variance:** Sudut pandang (_angle_) kamera yang meleset sedikit saja membuat jari bertumpuk secara visual, menyebabkan model kebingungan membedakan kelas dengan geometri serupa (seperti 'G' dan 'H').
+
+## Strategic Engineering Takeaways
+
+1. **Akurasi Internal adalah Ilusi:** Jaringan saraf adalah fungsi optimasi yang malas. Akurasi 100% sering kali merupakan indikasi bahwa model menemukan celah (_shortcut_) pada _dataset_, bukan bukti penyelesaian masalah.
+2. **Kapasitas vs. Robustness:** Arsitektur _ultralight_ (135k parameter, 64x64) sangat efisien secara komputasi, namun harus dibayar mahal dengan kerapuhan ekstrem terhadap _Data Distribution Shift_ saat masuk ke tahap produksi.
+3. **Kegagalan adalah Temuan Terpenting dalam XAI:** Menggunakan Grad-CAM untuk memvalidasi keberhasilan model adalah hal standar. Memanfaatkan Grad-CAM untuk menjelaskan kegagalan prediksi _out-of-distribution_ di dunia nyata adalah implementasi XAI yang sesungguhnya.

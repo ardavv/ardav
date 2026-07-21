@@ -2,7 +2,7 @@ import { getProjectBySlug, getProjects } from "@/lib/data";
 import { MDXContent } from "@/components/mdx/MDXContent";
 import NextImage from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Globe } from "lucide-react";
+import { ArrowLeft, Globe, Github, Database } from "lucide-react";
 import Link from "next/link";
 import { PageContainer } from "@/components/layout/PageContainer";
 
@@ -69,13 +69,33 @@ export default async function ProjectDetailPage({
           ))}
         </div>
 
-        <div className="flex justify-center gap-4 pt-4">
+        <div className="flex flex-wrap justify-center gap-3 pt-4">
           {project.link && (
             <a
               href={project.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-medium bg-foreground text-background px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 text-sm font-medium bg-foreground text-background px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-sm"
+            >
+              <Github className="h-4 w-4" /> Source Code
+            </a>
+          )}
+          {project.dataset && (
+            <a
+              href={project.dataset}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-medium bg-secondary text-secondary-foreground border border-border/50 px-6 py-2.5 rounded-full hover:bg-secondary/80 transition-colors shadow-sm"
+            >
+              <Database className="h-4 w-4" /> View Dataset
+            </a>
+          )}
+          {project.demo && (
+            <a
+              href={project.demo}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-medium bg-primary/10 text-primary border border-primary/20 px-6 py-2.5 rounded-full hover:bg-primary/20 transition-colors shadow-sm"
             >
               <Globe className="h-4 w-4" /> Live Demo
             </a>
