@@ -1,0 +1,119 @@
+---
+title: "Credit Risk Classification: Leakage Prevention & Risk-Averse Deployment"
+summary: "Membangun end-to-end Machine Learning pipeline menggunakan Custom Transformer dan StratifiedGroupKFold untuk memitigasi data leakage pada data longitudinal finansial."
+image: "/images/placeholder_thumbnail.png"
+date: "2026-07-12"
+metrics:
+  - "🎯 0.81 Good-Class Recall & 0.69 Macro F1 via ImbPipeline"
+  - "🛡️ Anti-leakage longitudinal evaluation with StratifiedGroupKFold"
+  - "⚖️ Risk-Averse inference thresholding (35% Poor override) in Streamlit"
+techStack:
+  ["Scikit-Learn", "XGBoost", "Imbalanced-Learn", "Streamlit", "SHAP", "Python"]
+demo: "[https://credit-score-classification-shap.streamlit.app/](https://credit-score-classification-shap.streamlit.app/)"
+link: "[https://github.com/ardavv/credit-score-classification](https://github.com/ardavv/credit-score-classification)"
+---
+
+<ModelDemo
+  url="[https://credit-score-classification-shap.streamlit.app/](https://credit-score-classification-shap.streamlit.app/)"
+  height="750px"
+/>
+
+## Overview & The Leakage Trap
+
+Proyek ini bertujuan untuk mengklasifikasikan tingkat risiko kredit nasabah ke dalam tiga kategori: **Poor**, **Standard**, dan **Good**. Tantangan terbesar dalam pemodelan data finansial ini bukan pada algoritma yang digunakan, melainkan pada struktur datanya yang bersifat longitudinal (data panel).
+
+Satu nasabah memiliki rekam jejak finansial yang direkam berulang kali di bulan yang berbeda. Jika menggunakan pembagian _train-test split_ acak konvensional, model akan menghafal nasabah yang sama dari bulan yang berbeda, memicu **Data Leakage** fatal yang membuat metrik evaluasi terlihat sempurna di atas kertas namun gagal total di dunia nyata. Proyek ini dibangun untuk menyelesaikan limitasi tersebut secara arsitektural.
+
+## My Role
+
+Sebagai Lead Architect dalam tim, saya bertanggung jawab penuh atas fondasi teknis dan arsitektur _deployment_ proyek ini:
+
+- Merancang tahapan Data Ingestion dan Preprocessing awal.
+- Membangun model _baseline_ menggunakan Logistic Regression untuk menetapkan standar performa.
+- Mengembangkan `CreditScoreDataWrangler`, sebuah _Custom Transformer_ untuk mengotomatisasi pembersihan data, _intra-group imputation_, dan _feature engineering_.
+- Mengembangkan aplikasi _inference_ berbasis Streamlit dengan injeksi logika _Risk-Averse_ untuk meminimalisir risiko bisnis.
+
+## Engineering the Pipeline (The "Secret Sauce")
+
+Untuk memastikan data yang masuk ke model saat _training_ memiliki perlakuan yang sama persis dengan data yang masuk saat _production_, saya merangkum seluruh logika prapemrosesan ke dalam sebuah _Custom Transformer_ Scikit-Learn (`CreditScoreDataWrangler`).
+
+Transformer ini menangani beberapa operasi krusial secara terisolasi:
+
+1. **Intra-group Imputation:** Mengisi _missing values_ menggunakan jejak historis dari nasabah yang sama (_forward-fill_ berbasis `Customer_ID`).
+2. **Winsorization:** Melakukan _capping_ outlier ekstrem secara ketat di kuantil 1% dan 99%.
+3. **Regex Extraction & Encoding:** Memparsing data kotor berformat teks menjadi numerik yang valid sebelum masuk ke tahap _scaling_.
+
+```python
+# Mengisolasi prapemrosesan dan resampling di dalam ImbPipeline
+pipeline = ImbPipeline([
+    ('wrangler', CreditScoreDataWrangler()),
+    ('preprocessor', ColumnTransformer(transformers=[...])),
+    ('sampler', RandomOverSampler(random_state=42)),
+    ('classifier', XGBClassifier(n_estimators=200, random_state=42))
+])
+```
+
+Evaluasi model dilakukan secara ketat menggunakan **StratifiedGroupKFold**. Skema ini mengunci seluruh baris data individu agar tidak menyeberang ke _fold_ evaluasi, sekaligus mempertahankan proporsi kelas target yang timpang (_imbalanced_) tetap seimbang di setiap putaran validasi.
+
+## Modelling & Handling Imbalance
+
+Distribusi target sangat didominasi oleh kelas _Standard_ (53%) dan _Poor_ (29%), meninggalkan kelas _Good_ sebagai minoritas ekstrem (18%). _Pipeline_ dirancang dengan injeksi teknik _Random Over Sampling_ (`imbalanced-learn`) di dalam putaran CV untuk mencegah bias algoritma terhadap kelas mayoritas.
+
+Pengujian performa dievaluasi secara terisolasi pada 20.000 sampel data uji akhir:
+
+| Algoritma                          | Accuracy | Precision (Macro) | Recall (Macro) | F1-Score (Macro) |
+| :--------------------------------- | :------: | :---------------: | :------------: | :--------------: |
+| **Logistic Regression (Baseline)** |   0.61   |       0.61        |      0.67      |       0.61       |
+| Random Forest                      |   0.69   |       0.67        |      0.73      |       0.68       |
+| **XGBoost**                        | **0.70** |     **0.68**      |    **0.73**    |     **0.69**     |
+
+### Analisis Klasifikasi XGBoost
+
+Injeksi _oversampling_ bekerja sangat agresif. Model _baseline_ Logistic Regression sebenarnya mampu mendeteksi kelas _Good_ dengan tingkat _Recall_ 0.83, namun model linier tersebut gagal total di kelas mayoritas _Standard_ (_Recall_ hancur ke angka 0.48).
+
+XGBoost keluar sebagai pemenang karena mampu menyeimbangkan _trade-off_ ini. XGBoost mempertahankan tingkat kepekaan yang sangat tinggi pada kelas minoritas (**Recall 0.81 untuk kelas Good**, dan **Recall 0.76 untuk kelas Poor**), namun tetap menjaga batas keputusan yang solid pada kelas mayoritas. Ketika XGBoost memprediksi seorang nasabah masuk ke kategori _Standard_, tingkat presisinya mencapai **83%**.
+
+![Confusion Matrix XGBoost](/images/credit-score-classification/confusion_matrix_csc.png)
+
+Jika membedah matriks konfusi di atas, karakteristik prediksi XGBoost terlihat makin transparan. Model sangat berhati-hati dalam memberikan label _Poor_ kepada nasabah yang sebenarnya _Good_ (hanya 132 kasus). Namun, terdapat kebocoran prediksi di mana nasabah _Standard_ ditebak sebagai _Good_ (1.929 kasus) dan nasabah _Poor_ ditebak sebagai _Good_ (563 kasus). Dalam kacamata bisnis kredit, _False Positives_ di kelas _Good_ ini adalah celah yang akan berujung pada kredit macet (NPL). Celah algoritmik inilah yang harus ditutup melalui arsitektur tahap _deployment_.
+
+## Model Explainability (Inside the Black Box)
+
+Mengingat regulasi finansial menuntut transparansi, keputusan XGBoost dibedah menggunakan analisis metrik internal model dan ekosistem SHAP.
+
+![XGBoost Feature Importance](/images/credit-score-classification/feature_importance_csc.png)
+
+Berdasarkan ekstraksi fitur bawaan (_built-in feature importance_) XGBoost di atas, hierarki pengambilan keputusan model terlihat sangat jelas. Model sangat bergantung pada fitur kategorikal yang merepresentasikan ringkasan status finansial historis:
+
+- **Credit_Mix_Good** dan **Credit_Mix_Standard** mendominasi pembobotan keputusan secara absolut (skor > 0.20 - 0.35).
+- **Payment_of_Min_Amount_No** menjadi faktor dominan ketiga.
+  Hal ini membuktikan bahwa algoritma menggunakan histori makro nasabah sebagai pemisah utama (_primary splitters_) pada struktur pohon, sebelum masuk ke rincian angka numerik mentah seperti _Outstanding Debt_ atau _Interest Rate_.
+
+![SHAP Interaction Values](/images/credit-score-classification/shap_interaction_csc.png)
+
+Untuk memahami interaksi antar-variabel numerik utama, saya menganalisis matriks **SHAP Interaction Values**. Visualisasi di atas merepresentasikan efek interaksi antara `Monthly_Inhand_Salary`, `Age`, dan `Annual_Income`.
+Model tidak mengevaluasi gaji bulanan secara statis. Terdapat sebaran nilai interaksi yang signifikan di luar diagonal utama (khususnya antara _Annual Income_ dan _Monthly Inhand Salary_), yang berarti XGBoost menggunakan rasio dan hubungan antara variabel-variabel ini untuk mendefinisikan kapasitas finansial riil seorang nasabah, sebuah pola kompleks yang gagal ditangkap oleh model _baseline_ linier.
+
+## Deployment & Business Logic (Risk-Averse)
+
+Model terbaik di-ekspor dalam bentuk _pickle artifacts_ yang membungkus utuh arsitektur `ImbPipeline` (meliputi _Custom Transformer_, sampler, dan model XGBoost). Ini memastikan aplikasi _backend_ Streamlit dapat menerima _raw input_ dari pengguna dan memprosesnya menggunakan parameter rekayasa fitur yang sama persis seperti saat _training_.
+
+Pada tahap inferensi, saya mengimplementasikan logika **Risk-Averse**. Tingginya _False Positives_ pada prediksi kelas _Good_ (seperti yang terlihat pada _confusion matrix_) memaksa probabilitas XGBoost mentah ditimpa oleh _thresholding_ manual:
+
+- Jika probabilitas kelas _Poor_ menembus **35%**, sistem akan secara paksa melabeli nasabah sebagai _Poor_, menolak probabilitas mayoritas (argmax) di kelas lain.
+- Arsitektur ini menyeimbangkan ketajaman Machine Learning dengan strategi mitigasi risiko institusi keuangan yang konservatif.
+
+```python
+# Risk-Averse Inference Logic (Backend Deployment)
+raw_probs = model.predict_proba(X_input)[0]  # [Prob_Poor, Prob_Standard, Prob_Good]
+poor_threshold = 0.35
+
+# Override argmax jika risiko kredit macet (Poor) terdeteksi di atas threshold
+if raw_probs[0] >= poor_threshold:
+    final_prediction = "Poor"
+else:
+    final_prediction = class_labels[np.argmax(raw_probs)]
+```
+
+Pembahasan dan laporan teknis lebih detail mengenai proyek ini bisa diakses di sini:  
+[Laporan Klasifikasi Skor Kredit](https://docs.google.com/document/d/1Z_0rZKEEPBi1qcHVWqUZJj3pLh9zkWf825PF8vuFFwI/edit?usp=sharing)
