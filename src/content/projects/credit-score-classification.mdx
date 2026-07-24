@@ -1,119 +1,483 @@
 ---
-title: "Credit Risk Classification: Leakage Prevention & Risk-Averse Deployment"
-summary: "Membangun end-to-end Machine Learning pipeline menggunakan Custom Transformer dan StratifiedGroupKFold untuk memitigasi data leakage pada data longitudinal finansial."
-image: "/images/placeholder_thumbnail.png"
+title: "Credit Score Classification: Leakage-Aware Evaluation & Risk-Averse Deployment"
+summary: "A leakage-aware machine learning pipeline for classifying customer credit scores using group-based validation, automated preprocessing, and conservative deployment logic."
+image: "/images/credit-score-classification/csc-thumbnail.png"
 date: "2026-07-12"
 metrics:
-  - "🎯 0.81 Good-Class Recall & 0.69 Macro F1 via ImbPipeline"
-  - "🛡️ Anti-leakage longitudinal evaluation with StratifiedGroupKFold"
-  - "⚖️ Risk-Averse inference thresholding (35% Poor override) in Streamlit"
+  - "🎯 0.69 Macro F1 with XGBoost"
+  - "🛡️ Customer-aware evaluation with StratifiedGroupKFold"
+  - "⚖️ 35% Poor-risk override in Streamlit"
 techStack:
-  ["Scikit-Learn", "XGBoost", "Imbalanced-Learn", "Streamlit", "SHAP", "Python"]
-demo: "[https://credit-score-classification-shap.streamlit.app/](https://credit-score-classification-shap.streamlit.app/)"
-link: "[https://github.com/ardavv/credit-score-classification](https://github.com/ardavv/credit-score-classification)"
+  ["Scikit-Learn", "XGBoost", "Imbalanced-Learn", "Streamlit", "Python"]
+demo: "https://credit-score-classification-shap.streamlit.app/"
+link: "https://github.com/ardavv/credit-score-classification"
 ---
 
 <ModelDemo
-  url="[https://credit-score-classification-shap.streamlit.app/](https://credit-score-classification-shap.streamlit.app/)"
+  url="https://credit-score-classification-shap.streamlit.app/?embed=true"
   height="750px"
 />
 
-## Overview & The Leakage Trap
+## Overview
 
-Proyek ini bertujuan untuk mengklasifikasikan tingkat risiko kredit nasabah ke dalam tiga kategori: **Poor**, **Standard**, dan **Good**. Tantangan terbesar dalam pemodelan data finansial ini bukan pada algoritma yang digunakan, melainkan pada struktur datanya yang bersifat longitudinal (data panel).
+This project classifies customer credit scores into three categories: **Poor**, **Standard**, and **Good**.
 
-Satu nasabah memiliki rekam jejak finansial yang direkam berulang kali di bulan yang berbeda. Jika menggunakan pembagian _train-test split_ acak konvensional, model akan menghafal nasabah yang sama dari bulan yang berbeda, memicu **Data Leakage** fatal yang membuat metrik evaluasi terlihat sempurna di atas kertas namun gagal total di dunia nyata. Proyek ini dibangun untuk menyelesaikan limitasi tersebut secara arsitektural.
+The dataset contains monthly financial records, meaning the same customer appears multiple times across different periods. This made the validation strategy just as important as the model itself. With a conventional random split, records from one customer could appear in both the training and test sets, allowing the model to learn customer-specific patterns instead of generalizing to unseen customers.
 
-## My Role
+To prevent that issue, the project uses customer-aware data splitting, group-based cross-validation, reusable preprocessing, and an end-to-end deployment pipeline.
 
-Sebagai Lead Architect dalam tim, saya bertanggung jawab penuh atas fondasi teknis dan arsitektur _deployment_ proyek ini:
+---
 
-- Merancang tahapan Data Ingestion dan Preprocessing awal.
-- Membangun model _baseline_ menggunakan Logistic Regression untuk menetapkan standar performa.
-- Mengembangkan `CreditScoreDataWrangler`, sebuah _Custom Transformer_ untuk mengotomatisasi pembersihan data, _intra-group imputation_, dan _feature engineering_.
-- Mengembangkan aplikasi _inference_ berbasis Streamlit dengan injeksi logika _Risk-Averse_ untuk meminimalisir risiko bisnis.
+## My Contribution
 
-## Engineering the Pipeline (The "Secret Sauce")
+This was a group machine learning project. My main responsibilities were:
 
-Untuk memastikan data yang masuk ke model saat _training_ memiliki perlakuan yang sama persis dengan data yang masuk saat _production_, saya merangkum seluruh logika prapemrosesan ke dalam sebuah _Custom Transformer_ Scikit-Learn (`CreditScoreDataWrangler`).
+- leading the technical design of the project,
+- preparing the data ingestion and initial preprocessing workflow,
+- designing the customer-aware validation strategy,
+- building the Logistic Regression baseline,
+- developing the `CreditScoreDataWrangler` custom transformer,
+- integrating the trained pipeline into a Streamlit application, and
+- implementing the Risk-Averse inference rule used during deployment.
 
-Transformer ini menangani beberapa operasi krusial secara terisolasi:
+The Random Forest and XGBoost experiments were developed collaboratively by other team members and evaluated through the same shared workflow.
 
-1. **Intra-group Imputation:** Mengisi _missing values_ menggunakan jejak historis dari nasabah yang sama (_forward-fill_ berbasis `Customer_ID`).
-2. **Winsorization:** Melakukan _capping_ outlier ekstrem secara ketat di kuantil 1% dan 99%.
-3. **Regex Extraction & Encoding:** Memparsing data kotor berformat teks menjadi numerik yang valid sebelum masuk ke tahap _scaling_.
+---
+
+## The Main Challenge: Customer-Level Leakage
+
+Each customer has several monthly observations. If those records are split randomly by row, the model may see one customer's earlier records during training and that same customer's later records during testing.
+
+That produces an evaluation score that looks convincing but does not represent performance on genuinely unseen customers.
+
+The initial holdout set was therefore created using `GroupShuffleSplit`, with `Customer_ID` used as the grouping key.
 
 ```python
-# Mengisolasi prapemrosesan dan resampling di dalam ImbPipeline
-pipeline = ImbPipeline([
-    ('wrangler', CreditScoreDataWrangler()),
-    ('preprocessor', ColumnTransformer(transformers=[...])),
-    ('sampler', RandomOverSampler(random_state=42)),
-    ('classifier', XGBClassifier(n_estimators=200, random_state=42))
+splitter = GroupShuffleSplit(
+    n_splits=1,
+    test_size=0.2,
+    random_state=42
+)
+
+train_idx, test_idx = next(
+    splitter.split(
+        df,
+        groups=df["Customer_ID"]
+    )
+)
+
+train_df = df.iloc[train_idx].copy()
+test_df = df.iloc[test_idx].copy()
+```
+
+This keeps every record belonging to one customer entirely within either the training or test set.
+
+Hyperparameter tuning follows the same principle through five-fold `StratifiedGroupKFold`. It preserves customer boundaries while also maintaining a reasonably consistent target distribution across folds.
+
+```python
+sgkf = StratifiedGroupKFold(
+    n_splits=5,
+    shuffle=True,
+    random_state=42
+)
+```
+
+This setup makes the final evaluation more representative of how the model would perform when receiving data from a new customer.
+
+---
+
+## Data Preparation
+
+The raw dataset required several cleaning steps before modeling.
+
+Some numerical columns were stored as strings and contained invalid characters, while `Credit_History_Age` used values such as:
+
+```text
+15 Years and 11 Months
+```
+
+These values were parsed into numeric month counts. Invalid values in fields such as age, interest rate, number of loans, bank accounts, and credit cards were converted into missing values before imputation.
+
+Non-predictive identifiers were also removed:
+
+```python
+columns_to_drop = [
+    "ID",
+    "SSN",
+    "Name"
+]
+```
+
+The remaining preprocessing logic was encapsulated in a reusable Scikit-Learn transformer named `CreditScoreDataWrangler`.
+
+---
+
+## Custom Preprocessing Transformer
+
+The `CreditScoreDataWrangler` handles the preprocessing operations that must remain consistent between training and inference.
+
+Its main responsibilities include:
+
+1. **Customer-level imputation**
+
+   Missing values are first forward-filled using earlier records from the same `Customer_ID`.
+
+2. **Training-based fallback values**
+
+   Remaining numerical and categorical values are filled using medians and modes learned only from the training data.
+
+3. **Feature engineering**
+
+   `Payment_Behaviour` is separated into spending and payment-value indicators, while `Type_of_Loan` is expanded into individual loan-type features.
+
+4. **Outlier capping**
+
+   Numerical features are clipped using the 1st and 99th percentile boundaries learned during training.
+
+5. **Categorical encoding**
+
+   Selected categorical features are converted into one-hot encoded columns.
+
+6. **Schema alignment**
+
+   Data received during inference is reindexed to match the exact feature structure learned during training.
+
+```python
+class CreditScoreDataWrangler(
+    BaseEstimator,
+    TransformerMixin
+):
+    def fit(self, X, y=None):
+        X_fit = X.copy()
+
+        columns = self.num_cols + self.cat_cols
+        X_fit[columns] = (
+            X_fit
+            .groupby("Customer_ID")[columns]
+            .ffill()
+        )
+
+        self.global_medians_ = (
+            X_fit[self.num_cols]
+            .median()
+        )
+
+        self.global_modes_ = (
+            X_fit[self.cat_cols]
+            .mode()
+            .iloc[0]
+        )
+
+        X_fit = self._engineer_features(X_fit)
+
+        for column in self.num_cols:
+            self.capping_bounds_[column] = (
+                X_fit[column].quantile(0.01),
+                X_fit[column].quantile(0.99)
+            )
+
+        self.trained_columns_ = (
+            self._prepare_model_features(X_fit)
+            .columns
+            .tolist()
+        )
+
+        return self
+```
+
+By storing the learned medians, modes, capping boundaries, and final feature schema, the transformer prevents the preprocessing logic used during deployment from drifting away from the training workflow.
+
+---
+
+## Modeling Strategy
+
+Three algorithms were evaluated:
+
+| Model               | Role in the Experiment                                        |
+| ------------------- | ------------------------------------------------------------- |
+| Logistic Regression | Interpretable linear baseline                                 |
+| Random Forest       | Non-linear ensemble using bagging                             |
+| XGBoost             | Gradient-boosted trees for more complex feature relationships |
+
+Because the target classes were imbalanced, model selection was not based on accuracy alone.
+
+The class distribution was approximately:
+
+- **Standard:** 53%
+- **Poor:** 29%
+- **Good:** 18%
+
+The primary optimization metric was therefore **Macro F1**, which gives equal importance to all three classes regardless of their frequency.
+
+Macro Precision and Macro Recall were also included to evaluate whether a model performed consistently across the majority and minority classes.
+
+---
+
+## Handling Class Imbalance
+
+The XGBoost pipeline uses `RandomOverSampler` to increase the representation of minority classes during training.
+
+The sampler is placed inside an `ImbPipeline`:
+
+```python
+xgb_pipeline = ImbPipeline([
+    (
+        "wrangler",
+        CreditScoreDataWrangler(
+            num_cols=num_cols,
+            cat_cols=cat_cols,
+            drop_first=False,
+            drop_vif_features=False
+        )
+    ),
+    (
+        "sampler",
+        RandomOverSampler(
+            random_state=42
+        )
+    ),
+    (
+        "classifier",
+        XGBClassifier(
+            objective="multi:softprob",
+            eval_metric="mlogloss",
+            random_state=42,
+            tree_method="hist"
+        )
+    )
 ])
 ```
 
-Evaluasi model dilakukan secara ketat menggunakan **StratifiedGroupKFold**. Skema ini mengunci seluruh baris data individu agar tidak menyeberang ke _fold_ evaluasi, sekaligus mempertahankan proporsi kelas target yang timpang (_imbalanced_) tetap seimbang di setiap putaran validasi.
+Because resampling occurs inside the pipeline, it is applied only to the training portion of each cross-validation fold. Validation records are never duplicated or included in the oversampling process.
 
-## Modelling & Handling Imbalance
+This prevents resampled observations from leaking into model evaluation.
 
-Distribusi target sangat didominasi oleh kelas _Standard_ (53%) dan _Poor_ (29%), meninggalkan kelas _Good_ sebagai minoritas ekstrem (18%). _Pipeline_ dirancang dengan injeksi teknik _Random Over Sampling_ (`imbalanced-learn`) di dalam putaran CV untuk mencegah bias algoritma terhadap kelas mayoritas.
+---
 
-Pengujian performa dievaluasi secara terisolasi pada 20.000 sampel data uji akhir:
+## Hyperparameter Tuning
 
-| Algoritma                          | Accuracy | Precision (Macro) | Recall (Macro) | F1-Score (Macro) |
-| :--------------------------------- | :------: | :---------------: | :------------: | :--------------: |
-| **Logistic Regression (Baseline)** |   0.61   |       0.61        |      0.67      |       0.61       |
-| Random Forest                      |   0.69   |       0.67        |      0.73      |       0.68       |
-| **XGBoost**                        | **0.70** |     **0.68**      |    **0.73**    |     **0.69**     |
+Each model was tuned using the same group-aware cross-validation strategy and optimized using Macro F1.
 
-### Analisis Klasifikasi XGBoost
+For XGBoost, the search covered:
 
-Injeksi _oversampling_ bekerja sangat agresif. Model _baseline_ Logistic Regression sebenarnya mampu mendeteksi kelas _Good_ dengan tingkat _Recall_ 0.83, namun model linier tersebut gagal total di kelas mayoritas _Standard_ (_Recall_ hancur ke angka 0.48).
-
-XGBoost keluar sebagai pemenang karena mampu menyeimbangkan _trade-off_ ini. XGBoost mempertahankan tingkat kepekaan yang sangat tinggi pada kelas minoritas (**Recall 0.81 untuk kelas Good**, dan **Recall 0.76 untuk kelas Poor**), namun tetap menjaga batas keputusan yang solid pada kelas mayoritas. Ketika XGBoost memprediksi seorang nasabah masuk ke kategori _Standard_, tingkat presisinya mencapai **83%**.
-
-![Confusion Matrix XGBoost](/images/credit-score-classification/confusion_matrix_csc.png)
-
-Jika membedah matriks konfusi di atas, karakteristik prediksi XGBoost terlihat makin transparan. Model sangat berhati-hati dalam memberikan label _Poor_ kepada nasabah yang sebenarnya _Good_ (hanya 132 kasus). Namun, terdapat kebocoran prediksi di mana nasabah _Standard_ ditebak sebagai _Good_ (1.929 kasus) dan nasabah _Poor_ ditebak sebagai _Good_ (563 kasus). Dalam kacamata bisnis kredit, _False Positives_ di kelas _Good_ ini adalah celah yang akan berujung pada kredit macet (NPL). Celah algoritmik inilah yang harus ditutup melalui arsitektur tahap _deployment_.
-
-## Model Explainability (Inside the Black Box)
-
-Mengingat regulasi finansial menuntut transparansi, keputusan XGBoost dibedah menggunakan analisis metrik internal model dan ekosistem SHAP.
-
-![XGBoost Feature Importance](/images/credit-score-classification/feature_importance_csc.png)
-
-Berdasarkan ekstraksi fitur bawaan (_built-in feature importance_) XGBoost di atas, hierarki pengambilan keputusan model terlihat sangat jelas. Model sangat bergantung pada fitur kategorikal yang merepresentasikan ringkasan status finansial historis:
-
-- **Credit_Mix_Good** dan **Credit_Mix_Standard** mendominasi pembobotan keputusan secara absolut (skor > 0.20 - 0.35).
-- **Payment_of_Min_Amount_No** menjadi faktor dominan ketiga.
-  Hal ini membuktikan bahwa algoritma menggunakan histori makro nasabah sebagai pemisah utama (_primary splitters_) pada struktur pohon, sebelum masuk ke rincian angka numerik mentah seperti _Outstanding Debt_ atau _Interest Rate_.
-
-![SHAP Interaction Values](/images/credit-score-classification/shap_interaction_csc.png)
-
-Untuk memahami interaksi antar-variabel numerik utama, saya menganalisis matriks **SHAP Interaction Values**. Visualisasi di atas merepresentasikan efek interaksi antara `Monthly_Inhand_Salary`, `Age`, dan `Annual_Income`.
-Model tidak mengevaluasi gaji bulanan secara statis. Terdapat sebaran nilai interaksi yang signifikan di luar diagonal utama (khususnya antara _Annual Income_ dan _Monthly Inhand Salary_), yang berarti XGBoost menggunakan rasio dan hubungan antara variabel-variabel ini untuk mendefinisikan kapasitas finansial riil seorang nasabah, sebuah pola kompleks yang gagal ditangkap oleh model _baseline_ linier.
-
-## Deployment & Business Logic (Risk-Averse)
-
-Model terbaik di-ekspor dalam bentuk _pickle artifacts_ yang membungkus utuh arsitektur `ImbPipeline` (meliputi _Custom Transformer_, sampler, dan model XGBoost). Ini memastikan aplikasi _backend_ Streamlit dapat menerima _raw input_ dari pengguna dan memprosesnya menggunakan parameter rekayasa fitur yang sama persis seperti saat _training_.
-
-Pada tahap inferensi, saya mengimplementasikan logika **Risk-Averse**. Tingginya _False Positives_ pada prediksi kelas _Good_ (seperti yang terlihat pada _confusion matrix_) memaksa probabilitas XGBoost mentah ditimpa oleh _thresholding_ manual:
-
-- Jika probabilitas kelas _Poor_ menembus **35%**, sistem akan secara paksa melabeli nasabah sebagai _Poor_, menolak probabilitas mayoritas (argmax) di kelas lain.
-- Arsitektur ini menyeimbangkan ketajaman Machine Learning dengan strategi mitigasi risiko institusi keuangan yang konservatif.
+- number of estimators,
+- tree depth,
+- learning rate,
+- row subsampling,
+- column subsampling, and
+- minimum child weight.
 
 ```python
-# Risk-Averse Inference Logic (Backend Deployment)
-raw_probs = model.predict_proba(X_input)[0]  # [Prob_Poor, Prob_Standard, Prob_Good]
-poor_threshold = 0.35
-
-# Override argmax jika risiko kredit macet (Poor) terdeteksi di atas threshold
-if raw_probs[0] >= poor_threshold:
-    final_prediction = "Poor"
-else:
-    final_prediction = class_labels[np.argmax(raw_probs)]
+xgb_param_dist = {
+    "classifier__n_estimators": [
+        200,
+        400,
+        600
+    ],
+    "classifier__max_depth": [
+        4,
+        6,
+        8
+    ],
+    "classifier__learning_rate": [
+        0.01,
+        0.05,
+        0.1
+    ],
+    "classifier__subsample": [
+        0.8,
+        1.0
+    ],
+    "classifier__colsample_bytree": [
+        0.8,
+        1.0
+    ],
+    "classifier__min_child_weight": [
+        1,
+        3,
+        5
+    ]
+}
 ```
 
-Pembahasan dan laporan teknis lebih detail mengenai proyek ini bisa diakses di sini:  
-[Laporan Klasifikasi Skor Kredit](https://docs.google.com/document/d/1Z_0rZKEEPBi1qcHVWqUZJj3pLh9zkWf825PF8vuFFwI/edit?usp=sharing)
+`RandomizedSearchCV` was used to evaluate parameter combinations without the computational cost of an exhaustive grid search.
+
+---
+
+## Model Comparison
+
+The tuned models were evaluated on a separate test set containing approximately 20,000 records.
+
+| Algorithm           | Accuracy | Macro Precision | Macro Recall | Macro F1 |
+| :------------------ | :------: | :-------------: | :----------: | :------: |
+| Logistic Regression |   0.61   |      0.61       |     0.67     |   0.61   |
+| Random Forest       |   0.69   |      0.67       |   **0.73**   |   0.68   |
+| **XGBoost**         | **0.70** |    **0.68**     |   **0.73**   | **0.69** |
+
+XGBoost produced the strongest overall result, achieving the highest Accuracy, Macro Precision, and Macro F1.
+
+Random Forest reached the same Macro Recall, but XGBoost provided a slightly better balance between precision and recall across the three classes.
+
+The improvement over Logistic Regression also suggests that the relationship between the financial features and credit-score categories is not entirely linear.
+
+---
+
+## Class-Level Performance
+
+The overall metrics only show part of the result. Class-level evaluation provides a clearer view of the model's behavior.
+
+The Logistic Regression baseline achieved a **0.83 recall for the Good class**, but its recall for the Standard class fell to **0.48**. This means the linear model detected many Good customers, but struggled to preserve the boundary of the majority class.
+
+XGBoost produced a more balanced result:
+
+- **0.81 recall for Good**
+- **0.76 recall for Poor**
+- **0.83 precision for Standard**
+
+The model gave up a small amount of Good-class recall compared with Logistic Regression, but performed more consistently across all three credit-score categories.
+
+---
+
+## Confusion Matrix
+
+![Confusion Matrix for the final XGBoost model](/images/credit-score-classification/confusion_matrix_csc.png)
+
+The confusion matrix shows that most remaining errors occur between neighboring risk categories.
+
+One positive result is that only **132 customers who actually belonged to the Good class were classified as Poor**. This indicates that the model rarely moved a low-risk customer directly into the highest-risk category.
+
+The more important issue appeared in predictions assigned to the Good class:
+
+- **1,929 Standard customers were predicted as Good**
+- **563 Poor customers were predicted as Good**
+
+These cases matter because incorrectly assigning a customer to the Good category is potentially riskier than making a conservative prediction.
+
+That observation motivated the additional decision rule used in the deployed application.
+
+---
+
+## Inspecting Feature Importance
+
+![Top 20 XGBoost feature importances](/images/credit-score-classification/feature_importance_csc.png)
+
+The built-in XGBoost feature importance indicates that the model relies heavily on features representing a customer's existing credit profile.
+
+The three most influential features were:
+
+1. `Credit_Mix_Good`
+2. `Credit_Mix_Standard`
+3. `Payment_of_Min_Amount_No`
+
+Other relevant features included:
+
+- `Credit_Mix_Bad`
+- `Outstanding_Debt`
+- `Interest_Rate`
+- `Num_Credit_Card`
+- `Payment_of_Min_Amount_Yes`
+- `Num_Bank_Accounts`
+- `Delay_from_due_date`
+
+This ranking shows which features contributed most frequently to the tree-building process.
+
+It does not explain the direction of an individual prediction, but it provides a useful global view of the variables the model relied on most during training.
+
+---
+
+## Deployment
+
+The final XGBoost pipeline was exported as a serialized artifact and integrated into a Streamlit application.
+
+Because the artifact stores both the fitted `CreditScoreDataWrangler` and the trained XGBoost classifier, the application can reuse the medians, modes, percentile boundaries, encoded columns, and model parameters learned during training.
+
+The application allows users to:
+
+- enter customer financial information,
+- generate a credit-score prediction,
+- inspect the probability assigned to each class, and
+- compare the model's raw prediction with the Risk-Averse result.
+
+---
+
+## Risk-Averse Inference
+
+Using the class with the highest probability is not always the most appropriate decision rule for a risk-sensitive application.
+
+The confusion matrix showed that some Poor and Standard customers were still predicted as Good. To demonstrate a more conservative inference strategy, the Streamlit application applies a **35% Poor-class threshold**.
+
+When the predicted probability of the Poor class reaches or exceeds 35%, the final output is changed to Poor even when another class has the highest raw probability.
+
+```python
+class_labels = [
+    "Poor",
+    "Standard",
+    "Good"
+]
+
+raw_probabilities = (
+    model
+    .predict_proba(X_input)[0]
+)
+
+poor_threshold = 0.35
+
+if raw_probabilities[0] >= poor_threshold:
+    final_prediction = "Poor"
+else:
+    final_prediction = class_labels[
+        np.argmax(raw_probabilities)
+    ]
+```
+
+For example, a raw probability distribution of:
+
+```text
+Poor:     36%
+Standard: 39%
+Good:     25%
+```
+
+would normally produce a Standard prediction through `argmax`.
+
+With the conservative override, the final result becomes Poor because the estimated Poor-class risk exceeds the configured threshold.
+
+This rule is part of the deployment demonstration rather than the training process. It shows how model probabilities can be combined with an application-level policy when different prediction errors carry different consequences.
+
+---
+
+## What I Learned
+
+The most important lesson from this project was that a reliable evaluation design can matter more than selecting a more complex algorithm.
+
+A model evaluated with customer leakage may produce impressive metrics without demonstrating genuine generalization. Keeping each customer isolated across the training, validation, and test partitions created a more realistic estimate of model performance.
+
+The project also reinforced several practical lessons:
+
+- preprocessing should store its learned parameters for later inference,
+- resampling should happen only inside the training portion of cross-validation,
+- imbalanced multiclass problems should not be evaluated using accuracy alone,
+- class-level errors can reveal risks hidden by aggregate metrics, and
+- deployment decisions may require additional rules beyond the model's raw `argmax` output.
+
+---
+
+## Final Result
+
+The final system combines:
+
+- customer-aware train-test splitting,
+- five-fold `StratifiedGroupKFold`,
+- reusable preprocessing through a custom transformer,
+- oversampling inside an `ImbPipeline`,
+- XGBoost hyperparameter tuning,
+- multiclass evaluation using Macro F1, and
+- an interactive Streamlit deployment with conservative inference logic.
+
+XGBoost achieved a **0.69 Macro F1**, with **0.81 recall for Good customers** and **0.76 recall for Poor customers**.
+
+More importantly, the project demonstrates an end-to-end workflow that considers not only predictive performance, but also data separation, reproducibility, class imbalance, error analysis, and deployment behavior.
+
+A more detailed explanation of the methodology and experiments is available in the full report:
+
+[Read the Credit Score Classification Report](https://docs.google.com/document/d/1Z_0rZKEEPBi1qcHVWqUZJj3pLh9zkWf825PF8vuFFwI/edit?usp=sharing)
